@@ -1,0 +1,8 @@
+{
+  "startup_duration_seconds": 2.084,
+  "config_reload_seconds": 0.009,
+  "ping_latency_ms": 2,
+  "metrics_latency_ms": 2,
+  "dashboard_latency_ms": 11,
+  "routing_latency_ms": 10
+}

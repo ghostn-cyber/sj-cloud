@@ -1,0 +1,10 @@
+# Rate Limiting Middleware
+http:
+  middlewares:
+    global-rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+        sourceCriterion:
+          ipStrategy:
+            depth: 2

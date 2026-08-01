@@ -1,0 +1,5 @@
+# Compression (Gzip) Middleware
+http:
+  middlewares:
+    compression:
+      compress: {}

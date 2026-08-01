@@ -1,0 +1,12 @@
+liveness:
+  path: /health
+  port: 8080
+  initial_delay: 5
+  interval: 10
+  threshold: 3
+readiness:
+  path: /ready
+  port: 8080
+  initial_delay: 2
+  interval: 5
+  threshold: 2

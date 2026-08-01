@@ -336,13 +336,54 @@ The following constraints apply:
 
 ---
 
-# 18. Related Documents
 
-- SYSTEM-OVERVIEW.md
-- NETWORK-TOPOLOGY.md
-- TENANT-ARCHITECTURE.md
-- STORAGE-ARCHITECTURE.md
-- SERVICE-MESH.md
+# 18. Network Architecture
+
+### 18.1 Segmentation Model
+
+The platform's control plane (`platform/tenant-manager/control-plane`) and runtime plane (`platform/tenant-manager/runtime-plane`) both operate within the six-network segmentation model defined in `docs/architecture/NETWORK-TOPOLOGY.md`:
+
+| Plane Component | Primary Network |
+|---|---|
+| Provisioning, registry, policy, quotas, domain, secrets, audit, billing, monitoring (control-plane submodules) | `sj-services` (as part of the API-Gateway-fronted service tier) |
+| Applications, databases, cache, storage, networking (runtime-plane submodules) | `sj-services` and `sj-data`, per component |
+
+The control plane never talks to tenant runtime containers directly over a public route — provisioning and lifecycle actions happen through internal service calls (SERVICE-COMMUNICATION.md), and the resulting tenant is exposed to the internet only via Traefik + the tenant's assigned domain (DNS-ARCHITECTURE.md).
+
+### 18.2 API Gateway as Platform Boundary
+
+`services/api-gateway` is the single public entry point for all platform and tenant API traffic. It is the enforcement point for the platform's multi-tenancy guarantee: a request is resolved to exactly one tenant context before it reaches any application or shared service. See `docs/architecture/TRAFFIC-FLOW.md` §2.4.
+
+### 18.3 Domain Provisioning Integration
+
+The control plane's `domain` module is the system of record for tenant DNS mappings (`config/tenants/<slug>/domain.yaml`), consumed by Traefik's dynamic configuration provider to add/remove tenant routing without a redeploy. This keeps tenant onboarding a data operation, consistent with "the platform must never hardcode tenant domains" (`docs/architecture/DNS-ARCHITECTURE.md` §3.2).
+
+### 18.4 Observability & Backup Integration
+
+- The control plane's `monitoring` module and the platform's `sj-monitoring` network are connected via scrape targets registered per service — see `NETWORK-TOPOLOGY.md` §3.5.
+- Backup/restore for the runtime plane's `databases` and `storage` components runs entirely within the isolated `sj-backup` network — see `NETWORK-TOPOLOGY.md` §3.6.
+
+### 18.5 Kubernetes Migration Note
+
+The control-plane/runtime-plane split already maps cleanly onto separate Kubernetes namespaces (e.g., `control-plane` and per-tenant or shared `runtime` namespaces), which is the direction `docs/architecture/NETWORK-TOPOLOGY.md` §7 and `NETWORK-SECURITY.md` §8 assume for Phase 4.
+
+Full networking detail is documented separately rather than duplicated here — see the six documents listed in `SYSTEM-OVERVIEW.md` §13.
+
+---
+
+# 19. Related Documents
+
+- `SYSTEM-OVERVIEW.md`
+- `NETWORK-TOPOLOGY.md`
+- `SERVICE-COMMUNICATION.md`
+- `DNS-ARCHITECTURE.md`
+- `TRAFFIC-FLOW.md`
+- `NETWORK-SECURITY.md`
+- `NETWORK-NAMING.md`
+- `TENANT-ARCHITECTURE.md`
+- `STORAGE-ARCHITECTURE.md`
+- `APPLICATION-RUNTIME.md`
+- `APPLICATION-DEPLOYMENT.md`
 
 ---
 
@@ -360,10 +401,12 @@ The following constraints apply:
 | Version | Date | Description |
 |---------|------|-------------|
 | 1.0 | 2026-07-29 | Initial release |
+| 1.1 | 2026-07-30 | Integrated Milestone 3 Network Architecture |
+| 1.2 | 2026-08-01 | Integrated Milestone 8 Application Runtime & Deployment Engine |
 
 ---
 
-**Document Version:** 1.0
+**Document Version:** 1.2
 
 **Status:** Approved
 

@@ -1,0 +1,15 @@
+const States = {
+  BOOTING: 'BOOTING',
+  LOADING: 'LOADING',
+  READY: 'READY',
+  RELOADING: 'RELOADING',
+  DEGRADED: 'DEGRADED',
+  RECOVERING: 'RECOVERING',
+  FAILED: 'FAILED',
+  STOPPING: 'STOPPING',
+  STOPPED: 'STOPPED'
+};
+
+module.exports = {
+  States
+};

@@ -1,0 +1,80 @@
+type: object
+required:
+  - application_id
+  - tenant_id
+  - display_name
+  - runtime
+  - image
+properties:
+  application_id:
+    type: string
+    pattern: "^[a-z0-9-]+$"
+  tenant_id:
+    type: string
+    pattern: "^[a-z0-9-]+$"
+  display_name:
+    type: string
+  runtime:
+    type: string
+    enum:
+      - php
+      - laravel
+      - nodejs
+      - express
+      - react-ssr
+      - nextjs
+      - fastapi
+      - go
+      - rust
+      - static
+      - worker
+      - cron
+      - background-worker
+  image:
+    type: string
+  repository:
+    type: string
+  version:
+    type: string
+  owner:
+    type: string
+  resource_limits:
+    type: object
+    properties:
+      cpu:
+        type: string
+      memory:
+        type: string
+  health:
+    type: object
+    properties:
+      path:
+        type: string
+      port:
+        type: integer
+      initial_delay:
+        type: integer
+      interval:
+        type: integer
+      threshold:
+        type: integer
+  scaling:
+    type: object
+    properties:
+      min_replicas:
+        type: integer
+      max_replicas:
+        type: integer
+      target_cpu:
+        type: integer
+  networking:
+    type: object
+    properties:
+      ports:
+        type: array
+        items:
+          type: integer
+      domains:
+        type: array
+        items:
+          type: string

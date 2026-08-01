@@ -2,7 +2,7 @@
 
 **Document ID:** ARC-NETWORK-001
 
-**Version:** 1.0
+**Version:** 1.1
 
 **Status:** Approved
 
@@ -14,434 +14,248 @@
 - ISS-001
 - STD-NETWORK-001
 - STD-SECURITY-001
+- STD-NAMING-001
 
 ---
 
 # 1. Purpose
 
-This document defines the logical and physical network topology of the SJ Cloud Platform.
+This document defines the logical and physical network topology of the SJ Cloud Platform. 
 
-It describes how traffic flows through the platform, how services communicate, network segmentation, trust boundaries, and the evolution of the networking model from a single-server deployment to a Kubernetes-based infrastructure.
-
-This document complements the Network Standard by illustrating how the standard is implemented within the platform architecture.
+It details how traffic enters the platform, how services are isolated, and how the networking model transitions from a local VPS environment to a multi-node, Kubernetes-orchestrated cluster without modifying the applications' logical relationships.
 
 ---
 
 # 2. Networking Objectives
 
-The SJ Cloud network architecture is designed to:
-
-- Secure all inbound and outbound traffic.
-- Isolate tenants and platform services.
-- Minimize the public attack surface.
-- Enable horizontal scalability.
-- Support observability.
-- Maintain portability across deployment phases.
-- Prepare for Kubernetes networking.
+The network topology enforces the following platform design objectives:
+- **Zero Ingress Bypass:** No internal service (other than the edge proxy) can be reached directly from the Internet.
+- **Strict Host Isolation:** Applications, databases, and operational pipelines exist on segregated networks.
+- **Service-Scoped Trust:** Trust is not transitive. Access is restricted to explicit source-destination connections.
+- **Unified Observability Scrapes:** Centralized monitoring agents pull metrics via read-only endpoints without exposing administrative dashboards.
+- **Kubernetes Readiness:** Logical Docker network segmentation maps cleanly to Kubernetes Namespaces and NetworkPolicies.
 
 ---
 
-# 3. High-Level Network Topology
+# 3. Trust Zones & Boundaries
 
-```
-                        Internet
-                            │
-                            ▼
-                    Cloudflare Edge
-              DNS • CDN • WAF • DDoS • TLS
-                            │
-                            ▼
-                     Ubuntu VPS Firewall
-                     (Allow 80, 443, SSH*)
-                            │
-                            ▼
-                     Traefik Gateway
-                            │
-      ┌─────────────────────┼─────────────────────┐
-      ▼                     ▼                     ▼
- Platform Services     Tenant Services      Management APIs
-      │                     │                     │
-      └──────────────┬──────┴──────────────┬──────┘
-                     ▼                     ▼
-              Internal Docker Networks
-                     │
-      ┌──────────────┼──────────────┐
-      ▼              ▼              ▼
- PostgreSQL       Redis         MinIO Storage
-                     │
-                     ▼
-        Prometheus • Grafana • Loki
-```
+The platform is structured into distinct, nested Trust Zones. Transition between zones is governed by firewalls, proxies, and API Gateways.
 
-All public traffic MUST enter through Cloudflare before reaching the platform.
+```mermaid
+graph TD
+    subgraph Public Internet
+        Internet[Public Clients]
+    end
 
----
+    subgraph Trust Zone: Edge
+        Cloudflare[Cloudflare Edge WAF/DDoS]
+    end
 
-# 4. Trust Zones
+    subgraph Trust Zone: Gateway
+        HostFW[VPS UFW Firewall]
+        Traefik[Traefik Reverse Proxy]
+        DockerProxy[Docker API Proxy]
+        HostDocker[(Host Docker Daemon)]
+    end
 
-The platform is divided into the following trust zones.
+    subgraph Trust Zone: Platform Services
+        APIGateway[API Gateway]
+        Auth[Auth Service]
+        Notification[Notification Service]
+    end
 
-| Zone | Description | Public Access |
-|------|-------------|---------------|
-| Internet | External users and systems | Yes |
-| Edge | Cloudflare services | Yes |
-| Gateway | Traefik reverse proxy | Limited |
-| Platform | Shared internal services | No |
-| Tenant | Tenant applications | No |
-| Data | PostgreSQL, Redis, MinIO | No |
-| Operations | Monitoring and logging | No |
+    subgraph Trust Zone: Tenant Services
+        TenantApp[Tenant Applications]
+    end
 
-Traffic between trust zones SHALL be explicitly controlled.
+    subgraph Trust Zone: Data Services
+        Postgres[(PostgreSQL)]
+        Redis[(Redis Cache)]
+        Minio[(MinIO Object Storage)]
+    end
 
----
+    subgraph Trust Zone: Operations
+        Prometheus[Prometheus & Grafana]
+    end
 
-# 5. Logical Network Segmentation
+    subgraph Trust Zone: Backups
+        BackupAgent[Backup Agent]
+    end
 
-SJ Cloud defines the following logical networks.
-
-```
-edge-network
-```
-
-Purpose:
-
-- Public ingress
-- Reverse proxy
-
----
-
-```
-platform-network
-```
-
-Purpose:
-
-- Shared platform services
-
----
-
-```
-tenant-network
-```
-
-Purpose:
-
-- Tenant workloads
-
----
-
-```
-data-network
-```
-
-Purpose:
-
-- PostgreSQL
-- Redis
-- MinIO
-
----
-
-```
-operations-network
-```
-
-Purpose:
-
-- Monitoring
-- Logging
-- Metrics
-
----
-
-```
-management-network
-```
-
-Purpose:
-
-- Administrative tooling
-- Internal maintenance
-
-Services SHALL only connect to the networks required for their operation.
-
----
-
-# 6. Traffic Flow
-
-### External Requests
-
-```
-Client
-    │
-Cloudflare
-    │
-Traefik
-    │
-Application
-    │
-Database
+    Internet -->|HTTPS: 443| Cloudflare
+    Cloudflare -->|UFW Ingress: 443| HostFW
+    HostFW --> Traefik
+    Traefik -->|Routable Platform Traffic| APIGateway
+    Traefik -.->|Dynamic Socket Query| DockerProxy
+    DockerProxy -.->|Read-Only Socket| HostDocker
+    APIGateway --> TenantApp
+    APIGateway --> Auth
+    TenantApp --> Postgres
+    TenantApp --> Redis
+    TenantApp --> Minio
+    Prometheus -.->|Scrape Read-Only Metrics| TenantApp
+    BackupAgent -->|Snapshot & Encrypt| Postgres
+    BackupAgent -->|Archive Offsite| Minio
 ```
 
 ---
 
-### Internal Requests
+# 4. Logical Network Segmentation (Docker Networks)
 
-```
-Application
-      │
-Platform API
-      │
-Redis
-      │
-PostgreSQL
-```
+SJ Cloud segments workloads using six purpose-scoped Docker bridge networks. Containers are attached only to the minimum set of networks required to fulfill their function.
 
-Internal traffic remains on private networks.
-
----
-
-# 7. Service Discovery
-
-Services communicate using internal DNS names rather than IP addresses.
-
-Examples:
-
-```
-postgres
-redis
-minio
-auth-service
-tenant-api
-```
-
-Hardcoded IP addresses are prohibited.
+| Network Name | Purpose | Ingress Rules | Egress Rules | Connected Services |
+| :--- | :--- | :--- | :--- | :--- |
+| **`sj-edge`** | Direct edge ingress from Cloudflare | Ports 80, 443 from Internet | Port 80/443 to `sj-proxy` | Traefik |
+| **`sj-proxy`** | Routing zone | Only Traefik ingress | To API Gateway and routable platforms | Traefik, API Gateway, Status Page, Docker Proxy |
+| **`sj-services`** | Application runtime | Only API Gateway ingress | To `sj-data`, `sj-services` | API Gateway, Tenant Apps, Shared Services |
+| **`sj-data`** | Persistent storage | Only from `sj-services` or `sj-backup` | None (fully isolated) | PostgreSQL, Redis, MinIO |
+| **`sj-monitoring`** | Observability scraping | Only Prometheus egress scrapes | None | Prometheus, Loki, Grafana, Node Exporter |
+| **`sj-backup`** | Database and storage backups | From backup scheduler | To MinIO (`sj-data`) and offsite | Backup agent scripts |
 
 ---
 
-# 8. Firewall Model
+# 5. Ingress & Inbound Request Flow
 
-Ubuntu hosts SHALL expose only the minimum required ports.
+Every public request follows a strict path from the client browser to the tenant backend application:
 
-| Port | Purpose | Public |
-|------|---------|--------|
-| 80 | HTTP Redirect | Yes |
-| 443 | HTTPS | Yes |
-| 22 | SSH (Restricted) | Limited |
-| 5432 | PostgreSQL | No |
-| 6379 | Redis | No |
-| 9000 | MinIO API | No |
-| 9001 | MinIO Console | No |
-| 3000 | Grafana | No |
-| 9090 | Prometheus | No |
-| 3100 | Loki | No |
-
-Administrative ports MUST be restricted by firewall rules.
+1. **Client Browser:** Initiates a request to a platform or tenant domain (e.g., `tenant.startupjigawa.com` or `custom-domain.org`).
+2. **Cloudflare Edge:**
+   - Resolves DNS and terminates public TLS.
+   - Enforces DDoS protection and runs Web Application Firewall (WAF) rule sets.
+   - Forwards the clean request over an encrypted Origin connection to the VPS.
+3. **VPS Host Firewall (UFW):**
+   - Drops all traffic except SSH (restricted IP ranges) and ports 80/443.
+4. **Traefik Proxy (`sj-edge` & `sj-proxy`):**
+   - Terminates TLS using Let's Encrypt certificates (if bypassed by Cloudflare in dev/staging).
+   - Queries docker configuration dynamically via the internal `docker-api-proxy` translation layer.
+   - Dynamically routes requests matching host headers to the API Gateway.
+5. **API Gateway (`sj-services`):**
+   - Parses headers, authenticates requests, and queries the Tenant Registry.
+   - Binds the request to the tenant's execution context.
+   - Routes the request via Docker DNS to the dedicated tenant application container (e.g., `http://startup-jigawa-app`).
 
 ---
 
-# 9. DNS Architecture
+# 6. Observability Pipeline Path
 
-### Public DNS
+Metrics and log collection run on the segregated `sj-monitoring` network. This ensures monitoring traffic does not compete with runtime application bandwidth.
 
-Managed by Cloudflare.
+```mermaid
+sequenceDiagram
+    participant App as Tenant Application
+    participant Prom as Prometheus
+    participant Loki as Grafana Loki
+    participant Graf as Grafana Dashboard
 
-Examples:
-
-```
-sjcloud.io
-api.sjcloud.io
-auth.sjcloud.io
-storage.sjcloud.io
-grafana.sjcloud.io
-```
-
-### Internal DNS
-
-Managed by Docker networking (Phase 1–3) and Kubernetes DNS (Phase 4).
-
-Examples:
-
-```
-postgres
-redis
-platform-api
-tenant-api
+    Prom->>App: Scrape HTTP GET /metrics (sj-monitoring network)
+    App-->>Prom: Return Prometheus exposition text
+    App->>Loki: Push log streams (stdout/stderr via Docker plugin)
+    Graf->>Prom: Query metrics data
+    Graf->>Loki: Query log data
 ```
 
 ---
 
-# 10. Ingress Model
+# 7. Backup & Restore Architecture
 
-All inbound traffic SHALL follow:
+The backup pipeline runs on the isolated `sj-backup` network. Backup actions are scheduled and run out-of-band to prevent database connection exhaustion during peak traffic hours.
 
+```mermaid
+graph LR
+    subgraph sj-data Network
+        Postgres[(PostgreSQL)]
+    end
+
+    subgraph sj-backup Network
+        Agent[Backup Agent Container]
+    end
+
+    subgraph sj-data / S3 Storage
+        MinIO[(MinIO Backup Bucket)]
+    end
+
+    subgraph Offsite Archive
+        ColdStorage[Encrypted Cold Storage]
+    end
+
+    Agent -->|1. pg_dump| Postgres
+    Agent -->|2. Compress & Encrypt| Agent
+    Agent -->|3. Upload S3 API| MinIO
+    MinIO -.->|4. Replicate| ColdStorage
 ```
-Internet
-     │
-Cloudflare
-     │
-Traefik
-     │
-Service
-```
-
-No application container SHALL expose ports directly to the public Internet.
 
 ---
 
-# 11. Egress Model
+# 8. Kubernetes Compatibility & Migration Plan
 
-Outbound traffic MAY include:
+As the platform transitions from Docker Compose (Phase 1 & 2) to Kubernetes (Phase 4), the networking boundaries map directly to Kubernetes-native structures without structural revisions.
 
-- Email delivery
-- External APIs
-- Package repositories
-- Object storage replication
-- Monitoring integrations
+### 8.1 Docker to Kubernetes Resource Mapping
 
-Outbound traffic SHOULD be controlled and monitored.
+| Docker Concept | Kubernetes Equivalent | Implementation Method |
+| :--- | :--- | :--- |
+| **Docker Network** | Kubernetes Namespace | Logical separation using namespaces: `sj-system`, `sj-services`, `tenant-<slug>`. |
+| **Docker DNS (`http://auth`)** | CoreDNS Service Names | Target services using `<service>.<namespace>.svc.cluster.local`. |
+| **Bridge Isolation** | Network Policies (`NetworkPolicy`) | Define Ingress/Egress labels restricting pod-to-pod IP communications. |
+| **Traefik Proxy** | Ingress Controller | Deploy Traefik Ingress Controller matching CRDs. |
+| **Docker Volumes** | PersistentVolumeClaims (PVC) | Map database storage to dynamic storage classes (e.g., EBS, CSI driver). |
+
+### 8.2 Kubernetes Network Policy Outline
+
+Under Phase 4, a default-deny ingress policy is applied to all namespaces. Explicit policies are configured as follows:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-database-from-app
+  namespace: sj-data
+spec:
+  podSelector:
+    matchLabels:
+      app: postgresql
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: sj-services
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/part-of: tenant-apps
+    ports:
+    - protocol: TCP
+      port: 5432
+```
 
 ---
 
-# 12. Tenant Isolation
+# 9. Docker Compose Implementation
 
-Tenant applications SHALL be isolated through:
+In Phase 1 and 2, the network boundaries are implemented using a single Docker Compose network file:
 
-- Separate runtime configuration.
-- Dedicated application containers.
-- Network segmentation.
-- Access controls.
-- Independent secrets.
-
-Direct tenant-to-tenant communication is prohibited unless explicitly approved.
-
----
-
-# 13. Data Access
-
-Applications SHALL access:
-
-- PostgreSQL
-- Redis
-- MinIO
-
-through private networks only.
-
-Direct Internet access to data services is prohibited.
-
----
-
-# 14. Monitoring Network
-
-Operational components communicate through a dedicated monitoring network.
-
-Components include:
-
-- Prometheus
-- Grafana
-- Loki
-
-Monitoring traffic SHALL remain isolated from tenant traffic.
-
----
-
-# 15. Deployment Evolution
-
-### Phase 1
-
-```
-Single VPS
-Docker Compose
-Traefik
-```
-
-### Phase 2
-
-```
-Multiple VPS
-Docker Compose
-Shared DNS
-```
-
-### Phase 3 (Optional)
-
-```
-Docker Swarm
-```
-
-### Phase 4
-
-```
-Kubernetes Cluster
-Ingress Controller
-Network Policies
-```
-
-The logical network model SHALL remain consistent throughout all phases.
-
----
-
-# 16. High Availability Considerations
-
-Future high-availability improvements include:
-
-- Multiple Traefik instances.
-- Redundant PostgreSQL.
-- Redis replication.
-- Distributed object storage.
-- Multi-node monitoring.
-- Load-balanced application services.
-
-These capabilities are introduced as infrastructure maturity increases.
-
----
-
-# 17. Security Controls
-
-Network security is enforced through:
-
-- Cloudflare WAF.
-- TLS encryption.
-- Firewall policies.
-- Private service networks.
-- Service authentication.
-- Least-privilege access.
-- Centralized logging.
-
-Implementation details are defined in `STD-SECURITY-001`.
-
----
-
-# 18. Related Documents
-
-- SYSTEM-OVERVIEW.md
-- PLATFORM-ARCHITECTURE.md
-- TENANT-ARCHITECTURE.md
-- STORAGE-ARCHITECTURE.md
-- SERVICE-MESH.md
-
----
-
-# References
-
-- ISS-001
-- STD-NETWORK-001
-- STD-SECURITY-001
+- **Location:** `infrastructure/compose/00-network.yml`
+- **Subnets:** Assigned under `172.20.0.0/16` as non-overlapping `/24` subnets (`172.20.0.0/24` to `172.20.5.0/24`).
+- **Internal Flags:** All internal networks (`sj-proxy`, `sj-services`, `sj-data`, `sj-monitoring`, `sj-backup`) set the `internal: true` property to prevent direct outbound internet access.
+- **Labels:** Standardized metadata labels are attached to every network for automation and tracing.
 
 ---
 
 # Revision History
 
-| Version | Date | Description |
-|---------|------|-------------|
-| 1.0 | 2026-07-29 | Initial release |
+| Version | Date | Description | Author |
+| :--- | :--- | :--- | :--- |
+| 1.0 | 2026-07-29 | Initial release placeholder | Platform Engineering |
+| 1.1 | 2026-07-30 | Expanded topologies, flow details, and K8s mapping | Platform Engineering |
+| 1.2 | 2026-07-30 | Documented Docker Compose implementation file | Platform Engineering |
+| 1.3 | 2026-07-30 | Hardened Docker Socket isolation with standalone docker-api-proxy | Platform Engineering |
+| 1.4 | 2026-08-01 | Integrated Milestone 8 Application Runtime & Deployment Engine | Platform Engineering |
 
 ---
 
-**Document Version:** 1.0
+**Document Version:** 1.4
 
-**Status:** Approved
-
-**Owner:** SJ Cloud Platform Engineering
-
+**Owner:** Platform Engineering  
+**Approved by:** Platform Architecture Board  
+**Approved by:** Security Architecture Committee  
 © SJ Cloud Platform Engineering. All Rights Reserved.

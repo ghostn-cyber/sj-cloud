@@ -1,0 +1,37 @@
+#!/usr/bin/env node
+const path = require('path');
+const { FilesystemBackend } = require('../backend');
+const { RegistryLoader } = require('../loader');
+const { SnapshotCompiler } = require('../compiler');
+
+const PROJECT_ROOT = path.resolve(__dirname, '../../../../');
+const DEFAULT_CONFIG_DIR = path.join(PROJECT_ROOT, 'config/services');
+const DEFAULT_OUTPUT_PATH = path.join(DEFAULT_CONFIG_DIR, 'snapshot.json');
+
+const args = process.argv.slice(2);
+const configDir = args[0] ? path.resolve(args[0]) : DEFAULT_CONFIG_DIR;
+const outputPath = args[1] ? path.resolve(args[1]) : DEFAULT_OUTPUT_PATH;
+
+console.log(`=== Compiling Service Registry Snapshot ===`);
+console.log(`Source directory: ${configDir}`);
+console.log(`Output snapshot : ${outputPath}`);
+
+const backend = new FilesystemBackend(configDir);
+const loader = new RegistryLoader(backend);
+const compiler = new SnapshotCompiler(loader, outputPath);
+
+compiler.compile()
+  .then(result => {
+    if (result.success) {
+      console.log(`✅ Success: Compiled ${result.servicesCount} service definitions.`);
+      process.exit(0);
+    } else {
+      console.error(`❌ Compilation failed with ${result.errors.length} error(s):`);
+      result.errors.forEach(err => console.error(`  - ${err}`));
+      process.exit(1);
+    }
+  })
+  .catch(err => {
+    console.error(`❌ Unexpected compile error: ${err.message}`);
+    process.exit(1);
+  });

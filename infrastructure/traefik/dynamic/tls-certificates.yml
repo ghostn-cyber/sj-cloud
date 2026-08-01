@@ -1,0 +1,5 @@
+# TLS Certificates Configuration
+tls:
+  certificates:
+    - certFile: "/etc/traefik/certificates/development/platform.test.crt"
+      keyFile: "/etc/traefik/certificates/development/platform.test.key"

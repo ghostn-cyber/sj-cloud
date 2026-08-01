@@ -1,0 +1,6 @@
+command: "node server.js"
+entrypoint: []
+workdir: /app
+ports:
+  - container_port: 8080
+    host_port: 8080

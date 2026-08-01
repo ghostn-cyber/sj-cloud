@@ -1,0 +1,217 @@
+#!/usr/bin/env node
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const { FilesystemBackend } = require('../backend');
+const { RegistryLoader } = require('../loader');
+const { SnapshotCompiler } = require('../compiler');
+const { RegistryWatcher } = require('../watcher');
+const { HealthMonitor } = require('../../health/monitor');
+const HistoryAPI = require('../../../../history/history-api');
+const { globalEventDispatcher } = require('../../events');
+
+const PORT = process.env.PORT || 8080;
+const PROJECT_ROOT = path.resolve(__dirname, '../../../../');
+const CONFIG_DIR = path.join(PROJECT_ROOT, 'config/services');
+const SNAPSHOT_PATH = path.join(CONFIG_DIR, 'snapshot.json');
+
+let servicesConfig = {};
+let healthMonitor = null;
+
+const historyAPI = new HistoryAPI(path.join(PROJECT_ROOT, 'history'), SNAPSHOT_PATH);
+
+function loadSnapshot() {
+  try {
+    if (fs.existsSync(SNAPSHOT_PATH)) {
+      const content = fs.readFileSync(SNAPSHOT_PATH, 'utf8');
+      const snapshot = JSON.parse(content);
+      servicesConfig = snapshot.services || {};
+      console.log(`Loaded ${Object.keys(servicesConfig).length} service(s) from snapshot.`);
+      
+      if (healthMonitor) {
+        healthMonitor.updateConfigs(servicesConfig);
+      } else {
+        healthMonitor = new HealthMonitor(servicesConfig);
+        healthMonitor.start();
+      }
+    }
+  } catch (err) {
+    console.error(`Failed to load registry snapshot: ${err.message}`);
+  }
+}
+
+async function triggerCompilation() {
+  const backend = new FilesystemBackend(CONFIG_DIR);
+  const loader = new RegistryLoader(backend);
+  const compiler = new SnapshotCompiler(loader, SNAPSHOT_PATH);
+  const res = await compiler.compile();
+  if (res.success) {
+    console.log(`Auto-compiled snapshot with ${res.servicesCount} services.`);
+    loadSnapshot();
+  } else {
+    console.error(`Auto-compilation failed:`, res.errors);
+  }
+}
+
+const watcher = new RegistryWatcher(CONFIG_DIR, (eventType, filename) => {
+  console.log(`Config file change detected (${eventType}: ${filename}). Recompiling...`);
+  triggerCompilation().catch(err => console.error('Autocompile failed:', err));
+});
+
+triggerCompilation()
+  .then(() => {
+    watcher.start();
+    console.log('Started config watcher.');
+  })
+  .catch(err => {
+    console.error('Initial compilation failed:', err);
+    loadSnapshot();
+  });
+
+function readBody(req) {
+  return new Promise((resolve) => {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      resolve(body);
+    });
+  });
+}
+
+const server = http.createServer(async (req, res) => {
+  const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  const pathname = parsedUrl.pathname;
+
+  res.setHeader('Content-Type', 'application/json');
+
+  // 1. Try routing to history API
+  const handled = historyAPI.handleRequest(req, res);
+  if (handled) return;
+
+  if (pathname === '/health') {
+    res.statusCode = 200;
+    return res.end(JSON.stringify({ status: 'UP' }));
+  }
+
+  if (pathname === '/ready') {
+    if (Object.keys(servicesConfig).length > 0) {
+      res.statusCode = 200;
+      return res.end(JSON.stringify({ status: 'READY' }));
+    } else {
+      res.statusCode = 503;
+      return res.end(JSON.stringify({ status: 'NOT_READY', reason: 'No services registered' }));
+    }
+  }
+
+  if (pathname === '/rollback' && req.method === 'POST') {
+    try {
+      const body = await readBody(req);
+      let buildNumber;
+      try {
+        const parsed = JSON.parse(body);
+        buildNumber = parsed.buildNumber;
+      } catch (_) {
+        buildNumber = parseInt(parsedUrl.searchParams.get('buildNumber'), 10);
+      }
+
+      if (!buildNumber || isNaN(buildNumber)) {
+        res.statusCode = 400;
+        return res.end(JSON.stringify({ error: 'Missing or invalid buildNumber' }));
+      }
+
+      const { SnapshotManager } = require('../../cache/snapshot-manager');
+      const snapshotManager = new SnapshotManager(SNAPSHOT_PATH, path.join(PROJECT_ROOT, 'history'));
+      const rolledBack = snapshotManager.rollback(buildNumber);
+      
+      loadSnapshot();
+
+      res.statusCode = 200;
+      return res.end(JSON.stringify({ success: true, buildNumber, snapshot: rolledBack }));
+    } catch (err) {
+      res.statusCode = 500;
+      return res.end(JSON.stringify({ error: 'Rollback failed', details: err.message }));
+    }
+  }
+
+  if (pathname === '/services' && req.method === 'GET') {
+    const list = Object.entries(servicesConfig).map(([id, config]) => {
+      const s = config.service || (config.spec && config.spec.service) || {};
+      const k = config.kubernetes || (config.spec && config.spec.kubernetes) || {};
+      return {
+        id,
+        name: s.name,
+        version: s.version,
+        status: healthMonitor ? healthMonitor.getStatus(id) : 'Unknown',
+        protocol: s.protocol,
+        visibility: s.visibility,
+        network: s.network,
+        owner: s.owner,
+        environment: s.environment,
+        kubernetes: k
+      };
+    });
+    res.statusCode = 200;
+    return res.end(JSON.stringify(list, null, 2));
+  }
+
+  if (pathname.startsWith('/services/') && req.method === 'GET') {
+    const serviceId = pathname.split('/')[2];
+    const config = servicesConfig[serviceId];
+    if (config) {
+      const merged = {
+        ...config,
+        status: healthMonitor ? healthMonitor.getStatus(serviceId) : 'Unknown',
+        registeredAt: new Date().toISOString()
+      };
+      res.statusCode = 200;
+      return res.end(JSON.stringify(merged, null, 2));
+    } else {
+      res.statusCode = 404;
+      return res.end(JSON.stringify({ error: `Service not found: ${serviceId}` }));
+    }
+  }
+
+  if (pathname === '/metrics' && req.method === 'GET') {
+    res.setHeader('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+    let metrics = '';
+    
+    metrics += '# HELP sj_registry_services_total Total services registered\n';
+    metrics += '# TYPE sj_registry_services_total gauge\n';
+    metrics += `sj_registry_services_total ${Object.keys(servicesConfig).length}\n\n`;
+
+    const statuses = healthMonitor ? healthMonitor.getAllStatuses() : {};
+    const countByStatus = { Healthy: 0, Unhealthy: 0, Starting: 0, Maintenance: 0, Unknown: 0 };
+    for (const s of Object.values(statuses)) {
+      if (countByStatus[s] !== undefined) countByStatus[s]++;
+    }
+
+    for (const [status, val] of Object.entries(countByStatus)) {
+      metrics += '# HELP sj_registry_services_status_total Number of services in a status\n';
+      metrics += '# TYPE sj_registry_services_status_total gauge\n';
+      metrics += `sj_registry_services_status_total{status="${status}"} ${val}\n\n`;
+    }
+
+    res.statusCode = 200;
+    return res.end(metrics);
+  }
+
+  res.statusCode = 404;
+  res.end(JSON.stringify({ error: 'Not Found' }));
+});
+
+server.listen(PORT, () => {
+  console.log(`Control Plane Service Registry API listening on port ${PORT}`);
+});
+
+function shutdown() {
+  console.log('Shutting down Registry API...');
+  watcher.stop();
+  if (healthMonitor) healthMonitor.stop();
+  server.close(() => {
+    console.log('Registry API terminated.');
+    process.exit(0);
+  });
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);

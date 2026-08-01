@@ -1,0 +1,10 @@
+# Custom Proxy Headers Middleware
+http:
+  middlewares:
+    default-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+        customResponseHeaders:
+          X-Platform: "sj-cloud"
+          X-Content-Type-Options: "nosniff"

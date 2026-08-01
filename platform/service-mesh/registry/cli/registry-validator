@@ -1,0 +1,37 @@
+#!/usr/bin/env node
+const fs = require('fs');
+const path = require('path');
+const yaml = require('js-yaml');
+const { SchemaValidator } = require('../validator');
+
+const args = process.argv.slice(2);
+if (args.length === 0) {
+  console.error('Usage: registry-validator <file.yaml>');
+  process.exit(1);
+}
+
+const filePath = path.resolve(args[0]);
+if (!fs.existsSync(filePath)) {
+  console.error(`Error: File not found at ${filePath}`);
+  process.exit(1);
+}
+
+try {
+  const content = fs.readFileSync(filePath, 'utf8');
+  const config = yaml.load(content);
+  
+  const validator = new SchemaValidator();
+  const result = validator.validate(config);
+  
+  if (result.valid) {
+    console.log(`✅ ${path.basename(filePath)} is valid.`);
+    process.exit(0);
+  } else {
+    console.error(`❌ Validation failed for ${path.basename(filePath)}:`);
+    result.errors.forEach(err => console.error(`  - ${err}`));
+    process.exit(1);
+  }
+} catch (err) {
+  console.error(`❌ Error parsing file ${path.basename(filePath)}: ${err.message}`);
+  process.exit(1);
+}

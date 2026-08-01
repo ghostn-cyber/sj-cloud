@@ -1,0 +1,11 @@
+tenant_id: "{{tenant_id}}"
+slug: "{{slug}}"
+display_name: "{{display_name}}"
+status: "{{status}}"
+plan: "{{plan}}"
+environment: "{{environment}}"
+region: "{{region}}"
+features:
+  - "auth"
+  - "billing"
+  - "dashboard"

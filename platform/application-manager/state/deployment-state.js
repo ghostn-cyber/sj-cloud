@@ -1,0 +1,17 @@
+const DeploymentStates = {
+  CREATED: 'CREATED',
+  BUILDING: 'BUILDING',
+  BUILT: 'BUILT',
+  DEPLOYING: 'DEPLOYING',
+  VERIFYING: 'VERIFYING',
+  ACTIVE: 'ACTIVE',
+  SCALING: 'SCALING',
+  UPDATING: 'UPDATING',
+  FAILED: 'FAILED',
+  ROLLBACK: 'ROLLBACK',
+  ARCHIVED: 'ARCHIVED'
+};
+
+module.exports = {
+  DeploymentStates
+};

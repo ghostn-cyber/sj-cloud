@@ -1,0 +1,12 @@
+# Platform and Portal Router Configuration
+http:
+  routers:
+    platform-portal:
+      entryPoints:
+        - websecure
+      rule: "Host(`platform.test`) || Host(`startupjigawa.test`)"
+      service: platform-noop
+      tls: {}
+      middlewares:
+        - security-headers
+        - compression

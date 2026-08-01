@@ -1,0 +1,19 @@
+{
+  "name": "docker-api-proxy",
+  "version": "1.0.0",
+  "description": "Docker API Version Translation Proxy for Traefik Ingress Compatibility",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node src/tests/proxy.test.js"
+  },
+  "keywords": [
+    "docker",
+    "proxy",
+    "traefik",
+    "compatibility"
+  ],
+  "author": "Platform Engineering Group",
+  "license": "MIT",
+  "dependencies": {}
+}

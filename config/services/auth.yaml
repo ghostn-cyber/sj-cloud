@@ -1,0 +1,69 @@
+apiVersion: mesh.sjcloud.io/v1alpha1
+kind: Service
+schemaVersion: 1
+metadata:
+  name: auth
+spec:
+  service:
+    id: auth
+    name: Authentication Service
+    version: 1.0.0
+    protocol: http
+    visibility: private
+    network: sj-services
+    owner: platform-security
+    environment: development
+    dependencies:
+      - postgres
+      - redis
+    trust_level: low
+    resource_class: standard
+    runtime_class: nodejs
+    capabilities:
+      - read:auth
+      - write:auth
+    labels:
+      app: auth
+      tier: backend
+  routing:
+    internal_dns: http://auth
+    container_name: sj-auth
+    paths:
+      - /api/v1/auth
+  security:
+    tls_required: false
+    allowed_sources:
+      - api-gateway
+  timeouts:
+    connect_ms: 1500
+    read_ms: 5000
+    write_ms: 5000
+    request_ms: 8000
+  retry:
+    type: exponential_jitter
+    max_attempts: 3
+    base_delay_ms: 100
+    max_delay_ms: 2000
+  circuit_breaker:
+    failure_threshold: 5
+    recovery_timeout_ms: 10000
+    half_open_max_requests: 2
+  load_balancer:
+    strategy: round_robin
+  telemetry:
+    health_endpoint: /health
+    ready_endpoint: /ready
+    metrics_endpoint: /metrics
+  quotas:
+    rate_limit: 100r/s
+  scaling:
+    min_replicas: 1
+    max_replicas: 3
+  resources:
+    class: standard
+    cpu: '0.5'
+    memory: 512Mi
+  kubernetes:
+    service_name: auth-service
+    namespace: sj-services
+    port: 80

@@ -1,0 +1,32 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+title: "ServiceIdentity"
+type: "object"
+properties:
+  serviceId:
+    type: "string"
+    pattern: "^[a-z0-9-]+$"
+  namespace:
+    type: "string"
+  environment:
+    type: "string"
+  version:
+    type: "string"
+  owner:
+    type: "string"
+  trustLevel:
+    type: "string"
+    enum: ["high", "medium", "low"]
+  capabilities:
+    type: "array"
+    items:
+      type: "string"
+  labels:
+    type: "object"
+    additionalProperties:
+      type: "string"
+  metadata:
+    type: "object"
+required:
+  - serviceId
+  - namespace
+  - trustLevel

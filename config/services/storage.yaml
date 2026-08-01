@@ -1,0 +1,68 @@
+apiVersion: mesh.sjcloud.io/v1alpha1
+kind: Service
+schemaVersion: 1
+metadata:
+  name: storage
+spec:
+  service:
+    id: storage
+    name: Storage Service
+    version: 1.0.0
+    protocol: http
+    visibility: private
+    network: sj-services
+    owner: platform-storage
+    environment: development
+    dependencies:
+      - postgres
+      - minio
+    trust_level: low
+    resource_class: standard
+    runtime_class: nodejs
+    capabilities:
+      - read:storage
+      - write:storage
+    labels:
+      app: storage
+      tier: backend
+  routing:
+    internal_dns: http://storage
+    container_name: sj-storage
+    paths:
+      - /api/v1/storage
+  security:
+    tls_required: false
+    allowed_sources:
+      - api-gateway
+      - analytics
+  timeouts:
+    connect_ms: 1500
+    read_ms: 10000
+    write_ms: 30000
+    request_ms: 45000
+  retry:
+    type: exponential_backoff
+    max_attempts: 2
+    base_delay_ms: 200
+    max_delay_ms: 5000
+  circuit_breaker:
+    failure_threshold: 3
+    recovery_timeout_ms: 15000
+    half_open_max_requests: 1
+  load_balancer:
+    strategy: round_robin
+  telemetry:
+    health_endpoint: /health
+    ready_endpoint: /ready
+    metrics_endpoint: /metrics
+  scaling:
+    min_replicas: 2
+    max_replicas: 5
+  resources:
+    class: high_memory
+    cpu: '1.0'
+    memory: 2Gi
+  kubernetes:
+    service_name: storage-service
+    namespace: sj-services
+    port: 80

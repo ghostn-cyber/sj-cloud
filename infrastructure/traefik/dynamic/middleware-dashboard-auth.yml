@@ -1,0 +1,8 @@
+# Basic Auth Middleware for Dashboard Security
+http:
+  middlewares:
+    dashboard-auth:
+      basicAuth:
+        # User: admin / Pass: sjcloudadmin
+        users:
+          - "admin:$apr1$pNKH8jmv$mZucVB9AFnu3D6oU.0Hof0"

@@ -1,0 +1,61 @@
+apiVersion: mesh.sjcloud.io/v1alpha1
+kind: Service
+schemaVersion: 1
+metadata:
+  name: audit
+spec:
+  service:
+    id: audit
+    name: Audit Logging Service
+    version: 1.0.0
+    protocol: http
+    visibility: private
+    network: sj-services
+    owner: platform-compliance
+    environment: development
+    dependencies:
+      - postgres
+    trust_level: low
+    resource_class: standard
+    runtime_class: nodejs
+    capabilities:
+      - read:audit
+      - write:audit
+    labels:
+      app: audit
+      tier: backend
+  routing:
+    internal_dns: http://audit
+    container_name: sj-audit
+    paths:
+      - /api/v1/audit
+  security:
+    tls_required: false
+    allowed_sources:
+      - api-gateway
+      - auth
+      - billing
+  timeouts:
+    connect_ms: 1000
+    read_ms: 3000
+    write_ms: 3000
+    request_ms: 5000
+  retry:
+    type: exponential_jitter
+    max_attempts: 4
+    base_delay_ms: 50
+    max_delay_ms: 1000
+  circuit_breaker:
+    failure_threshold: 10
+    recovery_timeout_ms: 5000
+    half_open_max_requests: 3
+  load_balancer:
+    strategy: round_robin
+  telemetry:
+    health_endpoint: /health
+    ready_endpoint: /ready
+    metrics_endpoint: /metrics
+  kubernetes:
+    service_name: audit-service
+    namespace: sj-services
+    port: 80

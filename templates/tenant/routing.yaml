@@ -1,0 +1,7 @@
+routing:
+  entrypoints:
+    - "web"
+    - "websecure"
+  tls:
+    enabled: true
+    cert_resolver: "development"

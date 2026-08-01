@@ -1,0 +1,29 @@
+{
+  "platformName": "SJ Cloud",
+  "platformVersion": "1.0.0",
+  "runtimeVersion": "1.0.0",
+  "buildNumber": 4,
+  "snapshotVersion": "1.0.0",
+  "snapshotChecksum": "9852ddf0f2886a8a607cd76aad0d81a3adf3bd42d2867178e3b3716d1cea8c90",
+  "compileTimestamp": "2026-08-01T10:03:06.509Z",
+  "runtimeState": "READY",
+  "enabledFeatures": [
+    "service-mesh",
+    "api-gateway",
+    "runtime-governance",
+    "plugin-framework"
+  ],
+  "serviceCount": 10,
+  "pluginCount": 0,
+  "routingEngine": "sj-mesh-routing-engine",
+  "policyVersion": "v1alpha1",
+  "observabilityVersion": "1.0.0",
+  "supportedApiVersions": [
+    "mesh.sjcloud.io/v1alpha1"
+  ],
+  "supportedMeshVersion": "1.0.0",
+  "environment": "development",
+  "gitCommit": "local-dev",
+  "architectureVersion": "1.0.0",
+  "kubernetesCompatibility": true
+}

@@ -215,7 +215,48 @@ Platform architecture SHALL remain portable across these phases.
 
 ---
 
-# 13. Architectural Principles
+# 13. Networking
+
+SJ Cloud's networking is built on six purpose-scoped Docker networks that map directly onto the request lifecycle and, later, onto Kubernetes namespaces:
+
+```
+sj-edge → sj-proxy → sj-services → sj-data
+                          │
+                          ├──→ sj-monitoring (scrape-only)
+                          └──→ sj-backup (data agents only)
+```
+
+- **`sj-edge`** — the only network with a host-published port (80/443), owned exclusively by Traefik.
+- **`sj-proxy`** — routing tier; Traefik forwards to the API Gateway and other directly-routable platform front doors (Dashboard, docs, status).
+- **`sj-services`** — where tenant applications and shared services (auth, notifications, queue, search, storage, analytics, audit) run, fronted exclusively by the API Gateway.
+- **`sj-data`** — PostgreSQL, Redis, MinIO; reachable only from `sj-services`.
+- **`sj-monitoring`** — Prometheus, Grafana, Loki; scrapes across tiers via read-only metrics endpoints only.
+- **`sj-backup`** — isolated backup/restore agents; reachable only from `sj-data`, never from the request-serving path.
+
+All internal service-to-service communication uses Docker's internal DNS (e.g., `http://auth`, `http://postgres`) rather than public URLs — see `docs/architecture/SERVICE-COMMUNICATION.md`.
+
+DNS is organized into three tiers — corporate (`startupjigawa.com`), fixed platform subdomains (`api.`, `auth.`, `admin.`, etc.), and dynamic tenant domains (both platform-issued `<slug>.startupjigawa.com` and tenant-owned custom domains) — with tenant domains never hardcoded into platform code. See `docs/architecture/DNS-ARCHITECTURE.md`.
+
+The full request path is:
+
+```
+Internet → Cloudflare → Traefik → API Gateway → Application → Shared Services → Database → Storage
+```
+
+Full detail, security posture, and naming conventions live in the dedicated documents:
+
+- `docs/architecture/NETWORK-TOPOLOGY.md`
+- `docs/architecture/SERVICE-COMMUNICATION.md`
+- `docs/architecture/DNS-ARCHITECTURE.md`
+- `docs/architecture/TRAFFIC-FLOW.md`
+- `docs/architecture/NETWORK-SECURITY.md`
+- `docs/architecture/NETWORK-NAMING.md`
+
+This networking model is Milestone 3's deliverable and is a prerequisite for Milestone 4 (Reverse Proxy & Traefik implementation).
+
+---
+
+# 14. Architectural Principles
 
 SJ Cloud follows these principles:
 
@@ -232,7 +273,7 @@ SJ Cloud follows these principles:
 
 ---
 
-# 14. Availability and Resilience
+# 15. Availability and Resilience
 
 The platform is designed to:
 
@@ -246,7 +287,7 @@ Higher availability targets will evolve as the platform transitions to clustered
 
 ---
 
-# 15. Security Overview
+# 16. Security Overview
 
 Security is implemented through multiple layers:
 
@@ -263,7 +304,7 @@ Implementation requirements are defined in `STD-SECURITY-001`.
 
 ---
 
-# 16. Operational Model
+# 17. Operational Model
 
 Platform operations include:
 
@@ -280,19 +321,25 @@ Operational procedures are documented in the runbooks.
 
 ---
 
-# 17. Related Architecture Documents
+# 18. Related Architecture Documents
 
 This document is supported by:
 
 - `PLATFORM-ARCHITECTURE.md`
 - `NETWORK-TOPOLOGY.md`
-- `SERVICE-MESH.md`
+- `SERVICE-COMMUNICATION.md`
+- `DNS-ARCHITECTURE.md`
+- `TRAFFIC-FLOW.md`
+- `NETWORK-SECURITY.md`
+- `NETWORK-NAMING.md`
 - `TENANT-ARCHITECTURE.md`
 - `STORAGE-ARCHITECTURE.md`
+- `APPLICATION-RUNTIME.md`
+- `APPLICATION-DEPLOYMENT.md`
 
 ---
 
-# 18. References
+# 19. References
 
 - ISS-001
 - STD-NETWORK-001
@@ -307,10 +354,12 @@ This document is supported by:
 | Version | Date | Description |
 |---------|------|-------------|
 | 1.0 | 2026-07-29 | Initial release |
+| 1.1 | 2026-07-30 | Integrated Milestone 3 Networking & DNS Architecture |
+| 1.2 | 2026-08-01 | Integrated Milestone 8 Application Runtime & Deployment Engine |
 
 ---
 
-**Document Version:** 1.0
+**Document Version:** 1.2
 
 **Status:** Approved
 

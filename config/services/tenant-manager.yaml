@@ -1,0 +1,59 @@
+apiVersion: mesh.sjcloud.io/v1alpha1
+kind: Service
+schemaVersion: 1
+metadata:
+  name: tenant-manager
+spec:
+  service:
+    id: tenant-manager
+    name: Tenant Manager Service
+    version: 1.0.0
+    protocol: http
+    visibility: private
+    network: sj-services
+    owner: platform-core
+    environment: development
+    dependencies:
+      - postgres
+    trust_level: low
+    resource_class: standard
+    runtime_class: nodejs
+    capabilities:
+      - read:tenant-manager
+      - write:tenant-manager
+    labels:
+      app: tenant-manager
+      tier: backend
+  routing:
+    internal_dns: http://tenant-manager
+    container_name: sj-tenant-manager
+    paths:
+      - /api/v1/tenants
+  security:
+    tls_required: false
+    allowed_sources:
+      - api-gateway
+  timeouts:
+    connect_ms: 1500
+    read_ms: 5000
+    write_ms: 5000
+    request_ms: 8000
+  retry:
+    type: exponential_backoff
+    max_attempts: 3
+    base_delay_ms: 100
+    max_delay_ms: 2000
+  circuit_breaker:
+    failure_threshold: 5
+    recovery_timeout_ms: 10000
+    half_open_max_requests: 2
+  load_balancer:
+    strategy: round_robin
+  telemetry:
+    health_endpoint: /health
+    ready_endpoint: /ready
+    metrics_endpoint: /metrics
+  kubernetes:
+    service_name: tenant-manager-service
+    namespace: sj-services
+    port: 80

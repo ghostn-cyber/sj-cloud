@@ -1,0 +1,12 @@
+# Traefik Dashboard Router Configuration
+http:
+  routers:
+    dashboard:
+      entryPoints:
+        - websecure
+      rule: "Host(`dashboard.platform.test`)"
+      service: api@internal
+      tls: {}
+      middlewares:
+        - dashboard-auth
+        - security-headers

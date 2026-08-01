@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment configs
+.env
+.env.*
+!.env.example
+
+# Test & coverage outputs
+coverage/
+tmp/
+dist/
+build/
+
+# Logs and runtime caches
+logs/
+storage/
+backups/
+history/
+
+# Keys and Certificates
+*.pem
+*.key
+*.crt
+certificates/

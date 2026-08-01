@@ -1,0 +1,225 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+title: "SJ Cloud Service Registry Schema"
+type: "object"
+required:
+  - "apiVersion"
+  - "kind"
+  - "schemaVersion"
+  - "metadata"
+  - "spec"
+properties:
+  apiVersion:
+    type: "string"
+    enum: ["mesh.sjcloud.io/v1alpha1"]
+  kind:
+    type: "string"
+    enum: ["Service"]
+  schemaVersion:
+    type: "integer"
+    enum: [1]
+  metadata:
+    type: "object"
+    required:
+      - "name"
+    properties:
+      name:
+        type: "string"
+  spec:
+    type: "object"
+    required:
+      - "service"
+      - "routing"
+      - "timeouts"
+      - "retry"
+      - "circuit_breaker"
+      - "load_balancer"
+      - "telemetry"
+      - "kubernetes"
+    properties:
+      service:
+        type: "object"
+        required:
+          - "id"
+          - "name"
+          - "version"
+          - "protocol"
+          - "visibility"
+          - "network"
+          - "owner"
+          - "environment"
+        properties:
+          id:
+            type: "string"
+            pattern: "^[a-z0-9-]+$"
+          name:
+            type: "string"
+          version:
+            type: "string"
+          protocol:
+            type: "string"
+            enum: ["http", "https", "grpc", "tcp"]
+          visibility:
+            type: "string"
+            enum: ["public", "private", "internal"]
+          network:
+            type: "string"
+          owner:
+            type: "string"
+          environment:
+            type: "string"
+          dependencies:
+            type: "array"
+            items:
+              type: "string"
+          trust_level:
+            type: "string"
+            enum: ["high", "medium", "low"]
+          capabilities:
+            type: "array"
+            items:
+              type: "string"
+          labels:
+            type: "object"
+            additionalProperties:
+              type: "string"
+          runtime_class:
+            type: "string"
+          resource_class:
+            type: "string"
+      routing:
+        type: "object"
+        required:
+          - "internal_dns"
+          - "container_name"
+        properties:
+          internal_dns:
+            type: "string"
+          container_name:
+            type: "string"
+          paths:
+            type: "array"
+            items:
+              type: "string"
+      security:
+        type: "object"
+        properties:
+          tls_required:
+            type: "boolean"
+          allowed_sources:
+            type: "array"
+            items:
+              type: "string"
+      timeouts:
+        type: "object"
+        required:
+          - "connect_ms"
+          - "read_ms"
+          - "write_ms"
+          - "request_ms"
+        properties:
+          connect_ms:
+            type: "integer"
+            minimum: 0
+          read_ms:
+            type: "integer"
+            minimum: 0
+          write_ms:
+            type: "integer"
+            minimum: 0
+          request_ms:
+            type: "integer"
+            minimum: 0
+      retry:
+        type: "object"
+        required:
+          - "type"
+          - "max_attempts"
+          - "base_delay_ms"
+          - "max_delay_ms"
+        properties:
+          type:
+            type: "string"
+            enum: ["immediate", "linear", "exponential", "exponential_jitter", "exponential_backoff"]
+          max_attempts:
+            type: "integer"
+            minimum: 0
+          base_delay_ms:
+            type: "integer"
+            minimum: 0
+          max_delay_ms:
+            type: "integer"
+            minimum: 0
+      circuit_breaker:
+        type: "object"
+        required:
+          - "failure_threshold"
+          - "recovery_timeout_ms"
+          - "half_open_max_requests"
+        properties:
+          failure_threshold:
+            type: "integer"
+            minimum: 1
+          recovery_timeout_ms:
+            type: "integer"
+            minimum: 0
+          half_open_max_requests:
+            type: "integer"
+            minimum: 1
+      load_balancer:
+        type: "object"
+        required:
+          - "strategy"
+        properties:
+          strategy:
+            type: "string"
+            enum: ["round_robin", "least_connections", "weighted", "health_based"]
+      telemetry:
+        type: "object"
+        required:
+          - "health_endpoint"
+          - "ready_endpoint"
+          - "metrics_endpoint"
+        properties:
+          health_endpoint:
+            type: "string"
+          ready_endpoint:
+            type: "string"
+          metrics_endpoint:
+            type: "string"
+      quotas:
+        type: "object"
+        properties:
+          rate_limit:
+            type: "string"
+      scaling:
+        type: "object"
+        properties:
+          min_replicas:
+            type: "integer"
+          max_replicas:
+            type: "integer"
+      resources:
+        type: "object"
+        properties:
+          class:
+            type: "string"
+          cpu:
+            type: "string"
+          memory:
+            type: "string"
+      kubernetes:
+        type: "object"
+        required:
+          - "service_name"
+          - "namespace"
+          - "port"
+        properties:
+          service_name:
+            type: "string"
+          namespace:
+            type: "string"
+          port:
+            type: "integer"
+            minimum: 1
+            maximum: 65535
+additionalProperties: false

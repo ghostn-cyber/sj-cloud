@@ -1,0 +1,12 @@
+# API Gateway Router Configuration
+http:
+  routers:
+    api-gateway:
+      entryPoints:
+        - websecure
+      rule: "Host(`api.test`)"
+      service: platform-noop
+      tls: {}
+      middlewares:
+        - security-headers
+        - global-rate-limit

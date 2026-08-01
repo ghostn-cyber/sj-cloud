@@ -1,0 +1,5 @@
+ingress:
+  domains:
+    - app.platform.test
+  tls: true
+  port: 8080

@@ -1,0 +1,8 @@
+# Dynamic Services Configuration
+http:
+  services:
+    # Placeholder service for dynamic configurations
+    platform-noop:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:9999"

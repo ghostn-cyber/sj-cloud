@@ -204,75 +204,66 @@ Operational security standards are documented separately.
 
 ---
 
-# Development Workflow
+# Development Workflow & Commands
 
-Infrastructure changes follow the standard engineering lifecycle:
+Infrastructure and application managers can use the standard `Makefile` targets to build, validate, and test the platform.
 
-```
-Proposal
-    ↓
-Architecture Review
-    ↓
-Implementation
-    ↓
-Testing
-    ↓
-Pull Request
-    ↓
-Review
-    ↓
-Deployment
-```
+### Development Commands
+- **Initialize environment**: `make init`
+- **Setup networks**: `make network`
+- **Deploy Ingress stack**: `make deploy`
+- **Deploy Service Mesh stack**: `make mesh`
 
-All infrastructure modifications must comply with the engineering standards contained in this repository.
+### Application Build & Deployment Commands
+- **Register Application**: `make app-create ID=<app-id> TENANT=<tenant-id>`
+- **Compile Application Image**: `make app-build ID=<app-id>`
+- **Deploy Release Version**: `make app-deploy ID=<app-id> RELEASE=<release-id>`
+- **Rollback Application**: `make app-rollback ID=<app-id> RELEASE=<release-id>`
+- **Restart Application Service**: `make app-restart ID=<app-id>`
+- **Check Application Runtime Status**: `make app-status ID=<app-id>`
+- **Query Application Metrics**: `make app-metrics ID=<app-id>`
+
+### Validation Commands
+- **Validate Ingress Proxy Settings**: `make validate`
+- **Validate Service Mesh Registry**: `make validate-services`
+- **Validate Application Manager schemas**: `make app-validate`
+
+### Testing Commands
+- **Run Service Mesh Integration Tests**: `make mesh-test`
+- **Run Tenant Lifecycle Integration Tests**: `make tenant-test`
+- **Run Application Lifecycle Integration Tests**: `make app-test`
 
 ---
 
-# Contributing
-
-SJ Cloud follows a documented engineering workflow.
-
-Before contributing:
-
-- Read the Engineering Standards.
-- Review relevant Architecture Decision Records (ADRs).
-- Follow repository naming conventions.
-- Ensure documentation is updated.
-- Pass all automated validation checks.
-
-Detailed contribution guidelines are provided in `CONTRIBUTING.md`.
+# Completed Milestones
+- **Milestones 1–3**: Ingress foundations and core networking.
+- **Milestones 4–6.5**: Service Mesh, telemetry, DNS, and traffic routing.
+- **Milestones 7–7.5**: Tenant Lifecycle Engine and Production Hardening.
+- **Milestone 8**: Application Runtime & Deployment Engine (PaaS execution plane).
 
 ---
 
 # License
 
-SJ Cloud is proprietary software.
-
-Unauthorized copying, distribution, modification, or commercial use is prohibited except as explicitly authorized by SJ Cloud.
+MIT License. See [LICENSE](LICENSE) for more details.
 
 ---
 
 # Roadmap
 
-Platform evolution includes:
+Platform evolution roadmap:
 
-- Kubernetes support
-- Multi-region deployments
-- Service mesh
-- Internal developer platform
-- Automated tenant provisioning
-- GitOps deployments
-- Secret management platform
-- Identity federation
-- Platform APIs
-- Self-service developer portal
+- [x] Automated tenant provisioning
+- [x] Platform APIs
+- [x] Application Runtime & Deployments
+- [ ] Kubernetes Multi-Cluster execution plane
+- [ ] Self-service developer control dashboard
 
 ---
 
 # Maintained By
 
-SJ Cloud Engineering
+SJ Cloud Engineering  
+Platform Engineering Team  
 
-Platform Engineering Team
-
-Copyright © SJ Cloud. All rights reserved.
+Copyright © 2026 SJ Cloud. Licensed under the MIT License.

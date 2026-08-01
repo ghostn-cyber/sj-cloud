@@ -1,0 +1,7 @@
+labels:
+  platform: "sj-cloud"
+  layer: "tenant-runtime"
+  tenant: "{{tenant_id}}"
+  managed-by: "tenant-manager"
+  traefik.enable: "true"
+  traefik.docker.network: "sj-proxy"

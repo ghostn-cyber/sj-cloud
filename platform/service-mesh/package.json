@@ -1,0 +1,17 @@
+{
+  "name": "@sj-cloud/service-mesh",
+  "version": "1.0.0",
+  "description": "SJ Cloud Platform Service Mesh Subsystem",
+  "main": "proxy/server.js",
+  "bin": {
+    "registry-validator": "registry/cli/registry-validator",
+    "registry-loader": "registry/cli/registry-loader",
+    "registry-api": "registry/cli/registry-api"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "jsonschema": "^1.4.1"
+  },
+  "devDependencies": {},
+  "private": true
+}

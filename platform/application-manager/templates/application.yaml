@@ -1,0 +1,7 @@
+application_id: my-app
+tenant_id: my-tenant
+display_name: My Application
+runtime: nodejs
+image: node:20-alpine
+version: 1.0.0
+owner: admin

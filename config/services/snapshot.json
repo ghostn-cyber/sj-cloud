@@ -1,0 +1,2071 @@
+{
+  "services": {
+    "analytics": {
+      "service": {
+        "id": "analytics",
+        "name": "Analytics Service",
+        "version": "1.0.0",
+        "protocol": "http",
+        "visibility": "private",
+        "network": "sj-services",
+        "owner": "platform-bi",
+        "environment": "development",
+        "dependencies": [
+          "postgres",
+          "redis",
+          "storage"
+        ],
+        "trust_level": "low",
+        "resource_class": "standard",
+        "runtime_class": "nodejs",
+        "capabilities": [
+          "read:analytics",
+          "write:analytics"
+        ],
+        "labels": {
+          "app": "analytics",
+          "tier": "backend"
+        }
+      },
+      "routing": {
+        "internal_dns": "http://analytics",
+        "container_name": "sj-analytics",
+        "paths": [
+          "/api/v1/analytics"
+        ]
+      },
+      "security": {
+        "tls_required": false,
+        "allowed_sources": [
+          "api-gateway"
+        ]
+      },
+      "timeouts": {
+        "connect_ms": 2000,
+        "read_ms": 15000,
+        "write_ms": 15000,
+        "request_ms": 30000
+      },
+      "retry": {
+        "type": "linear",
+        "max_attempts": 2,
+        "base_delay_ms": 500,
+        "max_delay_ms": 2000
+      },
+      "circuit_breaker": {
+        "failure_threshold": 3,
+        "recovery_timeout_ms": 20000,
+        "half_open_max_requests": 1
+      },
+      "load_balancer": {
+        "strategy": "round_robin"
+      },
+      "telemetry": {
+        "health_endpoint": "/health",
+        "ready_endpoint": "/ready",
+        "metrics_endpoint": "/metrics"
+      },
+      "kubernetes": {
+        "service_name": "analytics-service",
+        "namespace": "sj-services",
+        "port": 80
+      },
+      "identity": {
+        "serviceId": "analytics",
+        "namespace": "sj-services",
+        "environment": "development",
+        "version": "1.0.0",
+        "owner": "platform-bi",
+        "trustLevel": "low",
+        "capabilities": [
+          "read:analytics",
+          "write:analytics"
+        ],
+        "labels": {
+          "app": "analytics",
+          "tier": "backend"
+        },
+        "metadata": {
+          "resourceClass": "standard",
+          "network": "sj-services",
+          "visibility": "private",
+          "runtimeClass": "nodejs",
+          "dependencies": [
+            "postgres",
+            "redis",
+            "storage"
+          ]
+        },
+        "spiffeId": "spiffe://sjcloud.io/ns/sj-services/sa/analytics"
+      },
+      "policies": {
+        "timeouts": {
+          "connect_ms": 2000,
+          "read_ms": 5000,
+          "write_ms": 15000,
+          "request_ms": 30000
+        },
+        "retry": {
+          "type": "linear",
+          "max_attempts": 2,
+          "base_delay_ms": 500,
+          "max_delay_ms": 2000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 3,
+          "recovery_timeout_ms": 20000,
+          "half_open_max_requests": 1
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "security": {
+          "tls_required": false,
+          "allowed_sources": [
+            "api-gateway"
+          ]
+        }
+      },
+      "spec": {
+        "service": {
+          "id": "analytics",
+          "name": "Analytics Service",
+          "version": "1.0.0",
+          "protocol": "http",
+          "visibility": "private",
+          "network": "sj-services",
+          "owner": "platform-bi",
+          "environment": "development",
+          "dependencies": [
+            "postgres",
+            "redis",
+            "storage"
+          ],
+          "trust_level": "low",
+          "resource_class": "standard",
+          "runtime_class": "nodejs",
+          "capabilities": [
+            "read:analytics",
+            "write:analytics"
+          ],
+          "labels": {
+            "app": "analytics",
+            "tier": "backend"
+          }
+        },
+        "routing": {
+          "internal_dns": "http://analytics",
+          "container_name": "sj-analytics",
+          "paths": [
+            "/api/v1/analytics"
+          ]
+        },
+        "security": {
+          "tls_required": false,
+          "allowed_sources": [
+            "api-gateway"
+          ]
+        },
+        "timeouts": {
+          "connect_ms": 2000,
+          "read_ms": 15000,
+          "write_ms": 15000,
+          "request_ms": 30000
+        },
+        "retry": {
+          "type": "linear",
+          "max_attempts": 2,
+          "base_delay_ms": 500,
+          "max_delay_ms": 2000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 3,
+          "recovery_timeout_ms": 20000,
+          "half_open_max_requests": 1
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "telemetry": {
+          "health_endpoint": "/health",
+          "ready_endpoint": "/ready",
+          "metrics_endpoint": "/metrics"
+        },
+        "kubernetes": {
+          "service_name": "analytics-service",
+          "namespace": "sj-services",
+          "port": 80
+        }
+      }
+    },
+    "api-gateway": {
+      "service": {
+        "id": "api-gateway",
+        "name": "API Gateway Service",
+        "version": "1.0.0",
+        "protocol": "http",
+        "visibility": "public",
+        "network": "sj-proxy",
+        "owner": "platform-routing",
+        "environment": "development",
+        "dependencies": [
+          "redis"
+        ],
+        "trust_level": "low",
+        "resource_class": "standard",
+        "runtime_class": "nodejs",
+        "capabilities": [
+          "read:api-gateway",
+          "write:api-gateway"
+        ],
+        "labels": {
+          "app": "api-gateway",
+          "tier": "backend"
+        }
+      },
+      "routing": {
+        "internal_dns": "http://api-gateway",
+        "container_name": "sj-api-gateway"
+      },
+      "security": {
+        "tls_required": true
+      },
+      "timeouts": {
+        "connect_ms": 2000,
+        "read_ms": 15000,
+        "write_ms": 15000,
+        "request_ms": 30000
+      },
+      "retry": {
+        "type": "exponential_jitter",
+        "max_attempts": 3,
+        "base_delay_ms": 100,
+        "max_delay_ms": 2000
+      },
+      "circuit_breaker": {
+        "failure_threshold": 5,
+        "recovery_timeout_ms": 10000,
+        "half_open_max_requests": 2
+      },
+      "load_balancer": {
+        "strategy": "round_robin"
+      },
+      "telemetry": {
+        "health_endpoint": "/health",
+        "ready_endpoint": "/ready",
+        "metrics_endpoint": "/metrics"
+      },
+      "kubernetes": {
+        "service_name": "api-gateway",
+        "namespace": "sj-proxy",
+        "port": 80
+      },
+      "identity": {
+        "serviceId": "api-gateway",
+        "namespace": "sj-proxy",
+        "environment": "development",
+        "version": "1.0.0",
+        "owner": "platform-routing",
+        "trustLevel": "low",
+        "capabilities": [
+          "read:api-gateway",
+          "write:api-gateway"
+        ],
+        "labels": {
+          "app": "api-gateway",
+          "tier": "backend"
+        },
+        "metadata": {
+          "resourceClass": "standard",
+          "network": "sj-proxy",
+          "visibility": "public",
+          "runtimeClass": "nodejs",
+          "dependencies": [
+            "redis"
+          ]
+        },
+        "spiffeId": "spiffe://sjcloud.io/ns/sj-proxy/sa/api-gateway"
+      },
+      "policies": {
+        "timeouts": {
+          "connect_ms": 2000,
+          "read_ms": 5000,
+          "write_ms": 15000,
+          "request_ms": 30000
+        },
+        "retry": {
+          "type": "exponential_jitter",
+          "max_attempts": 3,
+          "base_delay_ms": 100,
+          "max_delay_ms": 2000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 5,
+          "recovery_timeout_ms": 10000,
+          "half_open_max_requests": 2
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "security": {
+          "tls_required": true,
+          "allowed_sources": []
+        }
+      },
+      "spec": {
+        "service": {
+          "id": "api-gateway",
+          "name": "API Gateway Service",
+          "version": "1.0.0",
+          "protocol": "http",
+          "visibility": "public",
+          "network": "sj-proxy",
+          "owner": "platform-routing",
+          "environment": "development",
+          "dependencies": [
+            "redis"
+          ],
+          "trust_level": "low",
+          "resource_class": "standard",
+          "runtime_class": "nodejs",
+          "capabilities": [
+            "read:api-gateway",
+            "write:api-gateway"
+          ],
+          "labels": {
+            "app": "api-gateway",
+            "tier": "backend"
+          }
+        },
+        "routing": {
+          "internal_dns": "http://api-gateway",
+          "container_name": "sj-api-gateway"
+        },
+        "security": {
+          "tls_required": true
+        },
+        "timeouts": {
+          "connect_ms": 2000,
+          "read_ms": 15000,
+          "write_ms": 15000,
+          "request_ms": 30000
+        },
+        "retry": {
+          "type": "exponential_jitter",
+          "max_attempts": 3,
+          "base_delay_ms": 100,
+          "max_delay_ms": 2000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 5,
+          "recovery_timeout_ms": 10000,
+          "half_open_max_requests": 2
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "telemetry": {
+          "health_endpoint": "/health",
+          "ready_endpoint": "/ready",
+          "metrics_endpoint": "/metrics"
+        },
+        "kubernetes": {
+          "service_name": "api-gateway",
+          "namespace": "sj-proxy",
+          "port": 80
+        }
+      }
+    },
+    "audit": {
+      "service": {
+        "id": "audit",
+        "name": "Audit Logging Service",
+        "version": "1.0.0",
+        "protocol": "http",
+        "visibility": "private",
+        "network": "sj-services",
+        "owner": "platform-compliance",
+        "environment": "development",
+        "dependencies": [
+          "postgres"
+        ],
+        "trust_level": "low",
+        "resource_class": "standard",
+        "runtime_class": "nodejs",
+        "capabilities": [
+          "read:audit",
+          "write:audit"
+        ],
+        "labels": {
+          "app": "audit",
+          "tier": "backend"
+        }
+      },
+      "routing": {
+        "internal_dns": "http://audit",
+        "container_name": "sj-audit",
+        "paths": [
+          "/api/v1/audit"
+        ]
+      },
+      "security": {
+        "tls_required": false,
+        "allowed_sources": [
+          "api-gateway",
+          "auth",
+          "billing"
+        ]
+      },
+      "timeouts": {
+        "connect_ms": 1000,
+        "read_ms": 3000,
+        "write_ms": 3000,
+        "request_ms": 5000
+      },
+      "retry": {
+        "type": "exponential_jitter",
+        "max_attempts": 4,
+        "base_delay_ms": 50,
+        "max_delay_ms": 1000
+      },
+      "circuit_breaker": {
+        "failure_threshold": 10,
+        "recovery_timeout_ms": 5000,
+        "half_open_max_requests": 3
+      },
+      "load_balancer": {
+        "strategy": "round_robin"
+      },
+      "telemetry": {
+        "health_endpoint": "/health",
+        "ready_endpoint": "/ready",
+        "metrics_endpoint": "/metrics"
+      },
+      "kubernetes": {
+        "service_name": "audit-service",
+        "namespace": "sj-services",
+        "port": 80
+      },
+      "identity": {
+        "serviceId": "audit",
+        "namespace": "sj-services",
+        "environment": "development",
+        "version": "1.0.0",
+        "owner": "platform-compliance",
+        "trustLevel": "low",
+        "capabilities": [
+          "read:audit",
+          "write:audit"
+        ],
+        "labels": {
+          "app": "audit",
+          "tier": "backend"
+        },
+        "metadata": {
+          "resourceClass": "standard",
+          "network": "sj-services",
+          "visibility": "private",
+          "runtimeClass": "nodejs",
+          "dependencies": [
+            "postgres"
+          ]
+        },
+        "spiffeId": "spiffe://sjcloud.io/ns/sj-services/sa/audit"
+      },
+      "policies": {
+        "timeouts": {
+          "connect_ms": 1000,
+          "read_ms": 3000,
+          "write_ms": 3000,
+          "request_ms": 5000
+        },
+        "retry": {
+          "type": "exponential_jitter",
+          "max_attempts": 4,
+          "base_delay_ms": 50,
+          "max_delay_ms": 1000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 10,
+          "recovery_timeout_ms": 5000,
+          "half_open_max_requests": 3
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "security": {
+          "tls_required": false,
+          "allowed_sources": [
+            "api-gateway",
+            "auth",
+            "billing"
+          ]
+        }
+      },
+      "spec": {
+        "service": {
+          "id": "audit",
+          "name": "Audit Logging Service",
+          "version": "1.0.0",
+          "protocol": "http",
+          "visibility": "private",
+          "network": "sj-services",
+          "owner": "platform-compliance",
+          "environment": "development",
+          "dependencies": [
+            "postgres"
+          ],
+          "trust_level": "low",
+          "resource_class": "standard",
+          "runtime_class": "nodejs",
+          "capabilities": [
+            "read:audit",
+            "write:audit"
+          ],
+          "labels": {
+            "app": "audit",
+            "tier": "backend"
+          }
+        },
+        "routing": {
+          "internal_dns": "http://audit",
+          "container_name": "sj-audit",
+          "paths": [
+            "/api/v1/audit"
+          ]
+        },
+        "security": {
+          "tls_required": false,
+          "allowed_sources": [
+            "api-gateway",
+            "auth",
+            "billing"
+          ]
+        },
+        "timeouts": {
+          "connect_ms": 1000,
+          "read_ms": 3000,
+          "write_ms": 3000,
+          "request_ms": 5000
+        },
+        "retry": {
+          "type": "exponential_jitter",
+          "max_attempts": 4,
+          "base_delay_ms": 50,
+          "max_delay_ms": 1000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 10,
+          "recovery_timeout_ms": 5000,
+          "half_open_max_requests": 3
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "telemetry": {
+          "health_endpoint": "/health",
+          "ready_endpoint": "/ready",
+          "metrics_endpoint": "/metrics"
+        },
+        "kubernetes": {
+          "service_name": "audit-service",
+          "namespace": "sj-services",
+          "port": 80
+        }
+      }
+    },
+    "auth": {
+      "service": {
+        "id": "auth",
+        "name": "Authentication Service",
+        "version": "1.0.0",
+        "protocol": "http",
+        "visibility": "private",
+        "network": "sj-services",
+        "owner": "platform-security",
+        "environment": "development",
+        "dependencies": [
+          "postgres",
+          "redis"
+        ],
+        "trust_level": "low",
+        "resource_class": "standard",
+        "runtime_class": "nodejs",
+        "capabilities": [
+          "read:auth",
+          "write:auth"
+        ],
+        "labels": {
+          "app": "auth",
+          "tier": "backend"
+        }
+      },
+      "routing": {
+        "internal_dns": "http://auth",
+        "container_name": "sj-auth",
+        "paths": [
+          "/api/v1/auth"
+        ]
+      },
+      "security": {
+        "tls_required": false,
+        "allowed_sources": [
+          "api-gateway"
+        ]
+      },
+      "timeouts": {
+        "connect_ms": 1500,
+        "read_ms": 5000,
+        "write_ms": 5000,
+        "request_ms": 8000
+      },
+      "retry": {
+        "type": "exponential_jitter",
+        "max_attempts": 3,
+        "base_delay_ms": 100,
+        "max_delay_ms": 2000
+      },
+      "circuit_breaker": {
+        "failure_threshold": 5,
+        "recovery_timeout_ms": 10000,
+        "half_open_max_requests": 2
+      },
+      "load_balancer": {
+        "strategy": "round_robin"
+      },
+      "telemetry": {
+        "health_endpoint": "/health",
+        "ready_endpoint": "/ready",
+        "metrics_endpoint": "/metrics"
+      },
+      "quotas": {
+        "rate_limit": "100r/s"
+      },
+      "scaling": {
+        "min_replicas": 1,
+        "max_replicas": 3
+      },
+      "resources": {
+        "class": "standard",
+        "cpu": "0.5",
+        "memory": "512Mi"
+      },
+      "kubernetes": {
+        "service_name": "auth-service",
+        "namespace": "sj-services",
+        "port": 80
+      },
+      "identity": {
+        "serviceId": "auth",
+        "namespace": "sj-services",
+        "environment": "development",
+        "version": "1.0.0",
+        "owner": "platform-security",
+        "trustLevel": "low",
+        "capabilities": [
+          "read:auth",
+          "write:auth"
+        ],
+        "labels": {
+          "app": "auth",
+          "tier": "backend"
+        },
+        "metadata": {
+          "resourceClass": "standard",
+          "network": "sj-services",
+          "visibility": "private",
+          "runtimeClass": "nodejs",
+          "dependencies": [
+            "postgres",
+            "redis"
+          ]
+        },
+        "spiffeId": "spiffe://sjcloud.io/ns/sj-services/sa/auth"
+      },
+      "policies": {
+        "timeouts": {
+          "connect_ms": 1500,
+          "read_ms": 5000,
+          "write_ms": 5000,
+          "request_ms": 8000
+        },
+        "retry": {
+          "type": "exponential_jitter",
+          "max_attempts": 3,
+          "base_delay_ms": 100,
+          "max_delay_ms": 2000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 5,
+          "recovery_timeout_ms": 10000,
+          "half_open_max_requests": 2
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "security": {
+          "tls_required": false,
+          "allowed_sources": [
+            "api-gateway"
+          ]
+        }
+      },
+      "spec": {
+        "service": {
+          "id": "auth",
+          "name": "Authentication Service",
+          "version": "1.0.0",
+          "protocol": "http",
+          "visibility": "private",
+          "network": "sj-services",
+          "owner": "platform-security",
+          "environment": "development",
+          "dependencies": [
+            "postgres",
+            "redis"
+          ],
+          "trust_level": "low",
+          "resource_class": "standard",
+          "runtime_class": "nodejs",
+          "capabilities": [
+            "read:auth",
+            "write:auth"
+          ],
+          "labels": {
+            "app": "auth",
+            "tier": "backend"
+          }
+        },
+        "routing": {
+          "internal_dns": "http://auth",
+          "container_name": "sj-auth",
+          "paths": [
+            "/api/v1/auth"
+          ]
+        },
+        "security": {
+          "tls_required": false,
+          "allowed_sources": [
+            "api-gateway"
+          ]
+        },
+        "timeouts": {
+          "connect_ms": 1500,
+          "read_ms": 5000,
+          "write_ms": 5000,
+          "request_ms": 8000
+        },
+        "retry": {
+          "type": "exponential_jitter",
+          "max_attempts": 3,
+          "base_delay_ms": 100,
+          "max_delay_ms": 2000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 5,
+          "recovery_timeout_ms": 10000,
+          "half_open_max_requests": 2
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "telemetry": {
+          "health_endpoint": "/health",
+          "ready_endpoint": "/ready",
+          "metrics_endpoint": "/metrics"
+        },
+        "quotas": {
+          "rate_limit": "100r/s"
+        },
+        "scaling": {
+          "min_replicas": 1,
+          "max_replicas": 3
+        },
+        "resources": {
+          "class": "standard",
+          "cpu": "0.5",
+          "memory": "512Mi"
+        },
+        "kubernetes": {
+          "service_name": "auth-service",
+          "namespace": "sj-services",
+          "port": 80
+        }
+      }
+    },
+    "billing": {
+      "service": {
+        "id": "billing",
+        "name": "Billing and Subscription Service",
+        "version": "1.0.0",
+        "protocol": "http",
+        "visibility": "private",
+        "network": "sj-services",
+        "owner": "platform-finance",
+        "environment": "development",
+        "dependencies": [
+          "postgres",
+          "redis"
+        ],
+        "trust_level": "low",
+        "resource_class": "standard",
+        "runtime_class": "nodejs",
+        "capabilities": [
+          "read:billing",
+          "write:billing"
+        ],
+        "labels": {
+          "app": "billing",
+          "tier": "backend"
+        }
+      },
+      "routing": {
+        "internal_dns": "http://billing",
+        "container_name": "sj-billing",
+        "paths": [
+          "/api/v1/billing"
+        ]
+      },
+      "security": {
+        "tls_required": false,
+        "allowed_sources": [
+          "api-gateway"
+        ]
+      },
+      "timeouts": {
+        "connect_ms": 2000,
+        "read_ms": 10000,
+        "write_ms": 10000,
+        "request_ms": 15000
+      },
+      "retry": {
+        "type": "exponential_jitter",
+        "max_attempts": 3,
+        "base_delay_ms": 200,
+        "max_delay_ms": 3000
+      },
+      "circuit_breaker": {
+        "failure_threshold": 3,
+        "recovery_timeout_ms": 15000,
+        "half_open_max_requests": 2
+      },
+      "load_balancer": {
+        "strategy": "round_robin"
+      },
+      "telemetry": {
+        "health_endpoint": "/health",
+        "ready_endpoint": "/ready",
+        "metrics_endpoint": "/metrics"
+      },
+      "kubernetes": {
+        "service_name": "billing-service",
+        "namespace": "sj-services",
+        "port": 80
+      },
+      "identity": {
+        "serviceId": "billing",
+        "namespace": "sj-services",
+        "environment": "development",
+        "version": "1.0.0",
+        "owner": "platform-finance",
+        "trustLevel": "low",
+        "capabilities": [
+          "read:billing",
+          "write:billing"
+        ],
+        "labels": {
+          "app": "billing",
+          "tier": "backend"
+        },
+        "metadata": {
+          "resourceClass": "standard",
+          "network": "sj-services",
+          "visibility": "private",
+          "runtimeClass": "nodejs",
+          "dependencies": [
+            "postgres",
+            "redis"
+          ]
+        },
+        "spiffeId": "spiffe://sjcloud.io/ns/sj-services/sa/billing"
+      },
+      "policies": {
+        "timeouts": {
+          "connect_ms": 2000,
+          "read_ms": 5000,
+          "write_ms": 10000,
+          "request_ms": 15000
+        },
+        "retry": {
+          "type": "exponential_jitter",
+          "max_attempts": 3,
+          "base_delay_ms": 200,
+          "max_delay_ms": 3000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 3,
+          "recovery_timeout_ms": 15000,
+          "half_open_max_requests": 2
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "security": {
+          "tls_required": false,
+          "allowed_sources": [
+            "api-gateway"
+          ]
+        }
+      },
+      "spec": {
+        "service": {
+          "id": "billing",
+          "name": "Billing and Subscription Service",
+          "version": "1.0.0",
+          "protocol": "http",
+          "visibility": "private",
+          "network": "sj-services",
+          "owner": "platform-finance",
+          "environment": "development",
+          "dependencies": [
+            "postgres",
+            "redis"
+          ],
+          "trust_level": "low",
+          "resource_class": "standard",
+          "runtime_class": "nodejs",
+          "capabilities": [
+            "read:billing",
+            "write:billing"
+          ],
+          "labels": {
+            "app": "billing",
+            "tier": "backend"
+          }
+        },
+        "routing": {
+          "internal_dns": "http://billing",
+          "container_name": "sj-billing",
+          "paths": [
+            "/api/v1/billing"
+          ]
+        },
+        "security": {
+          "tls_required": false,
+          "allowed_sources": [
+            "api-gateway"
+          ]
+        },
+        "timeouts": {
+          "connect_ms": 2000,
+          "read_ms": 10000,
+          "write_ms": 10000,
+          "request_ms": 15000
+        },
+        "retry": {
+          "type": "exponential_jitter",
+          "max_attempts": 3,
+          "base_delay_ms": 200,
+          "max_delay_ms": 3000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 3,
+          "recovery_timeout_ms": 15000,
+          "half_open_max_requests": 2
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "telemetry": {
+          "health_endpoint": "/health",
+          "ready_endpoint": "/ready",
+          "metrics_endpoint": "/metrics"
+        },
+        "kubernetes": {
+          "service_name": "billing-service",
+          "namespace": "sj-services",
+          "port": 80
+        }
+      }
+    },
+    "notification": {
+      "service": {
+        "id": "notification",
+        "name": "Notification Service",
+        "version": "1.0.0",
+        "protocol": "http",
+        "visibility": "private",
+        "network": "sj-services",
+        "owner": "platform-comms",
+        "environment": "development",
+        "dependencies": [
+          "redis"
+        ],
+        "trust_level": "low",
+        "resource_class": "standard",
+        "runtime_class": "nodejs",
+        "capabilities": [
+          "read:notification",
+          "write:notification"
+        ],
+        "labels": {
+          "app": "notification",
+          "tier": "backend"
+        }
+      },
+      "routing": {
+        "internal_dns": "http://notification",
+        "container_name": "sj-notification",
+        "paths": [
+          "/api/v1/notification"
+        ]
+      },
+      "security": {
+        "tls_required": false,
+        "allowed_sources": [
+          "api-gateway",
+          "billing"
+        ]
+      },
+      "timeouts": {
+        "connect_ms": 1500,
+        "read_ms": 5000,
+        "write_ms": 5000,
+        "request_ms": 8000
+      },
+      "retry": {
+        "type": "exponential_jitter",
+        "max_attempts": 5,
+        "base_delay_ms": 100,
+        "max_delay_ms": 3000
+      },
+      "circuit_breaker": {
+        "failure_threshold": 5,
+        "recovery_timeout_ms": 10000,
+        "half_open_max_requests": 2
+      },
+      "load_balancer": {
+        "strategy": "round_robin"
+      },
+      "telemetry": {
+        "health_endpoint": "/health",
+        "ready_endpoint": "/ready",
+        "metrics_endpoint": "/metrics"
+      },
+      "kubernetes": {
+        "service_name": "notification-service",
+        "namespace": "sj-services",
+        "port": 80
+      },
+      "identity": {
+        "serviceId": "notification",
+        "namespace": "sj-services",
+        "environment": "development",
+        "version": "1.0.0",
+        "owner": "platform-comms",
+        "trustLevel": "low",
+        "capabilities": [
+          "read:notification",
+          "write:notification"
+        ],
+        "labels": {
+          "app": "notification",
+          "tier": "backend"
+        },
+        "metadata": {
+          "resourceClass": "standard",
+          "network": "sj-services",
+          "visibility": "private",
+          "runtimeClass": "nodejs",
+          "dependencies": [
+            "redis"
+          ]
+        },
+        "spiffeId": "spiffe://sjcloud.io/ns/sj-services/sa/notification"
+      },
+      "policies": {
+        "timeouts": {
+          "connect_ms": 1500,
+          "read_ms": 5000,
+          "write_ms": 5000,
+          "request_ms": 8000
+        },
+        "retry": {
+          "type": "exponential_jitter",
+          "max_attempts": 5,
+          "base_delay_ms": 100,
+          "max_delay_ms": 3000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 5,
+          "recovery_timeout_ms": 10000,
+          "half_open_max_requests": 2
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "security": {
+          "tls_required": false,
+          "allowed_sources": [
+            "api-gateway",
+            "billing"
+          ]
+        }
+      },
+      "spec": {
+        "service": {
+          "id": "notification",
+          "name": "Notification Service",
+          "version": "1.0.0",
+          "protocol": "http",
+          "visibility": "private",
+          "network": "sj-services",
+          "owner": "platform-comms",
+          "environment": "development",
+          "dependencies": [
+            "redis"
+          ],
+          "trust_level": "low",
+          "resource_class": "standard",
+          "runtime_class": "nodejs",
+          "capabilities": [
+            "read:notification",
+            "write:notification"
+          ],
+          "labels": {
+            "app": "notification",
+            "tier": "backend"
+          }
+        },
+        "routing": {
+          "internal_dns": "http://notification",
+          "container_name": "sj-notification",
+          "paths": [
+            "/api/v1/notification"
+          ]
+        },
+        "security": {
+          "tls_required": false,
+          "allowed_sources": [
+            "api-gateway",
+            "billing"
+          ]
+        },
+        "timeouts": {
+          "connect_ms": 1500,
+          "read_ms": 5000,
+          "write_ms": 5000,
+          "request_ms": 8000
+        },
+        "retry": {
+          "type": "exponential_jitter",
+          "max_attempts": 5,
+          "base_delay_ms": 100,
+          "max_delay_ms": 3000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 5,
+          "recovery_timeout_ms": 10000,
+          "half_open_max_requests": 2
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "telemetry": {
+          "health_endpoint": "/health",
+          "ready_endpoint": "/ready",
+          "metrics_endpoint": "/metrics"
+        },
+        "kubernetes": {
+          "service_name": "notification-service",
+          "namespace": "sj-services",
+          "port": 80
+        }
+      }
+    },
+    "queue": {
+      "service": {
+        "id": "queue",
+        "name": "Message Queue Service",
+        "version": "1.0.0",
+        "protocol": "http",
+        "visibility": "private",
+        "network": "sj-services",
+        "owner": "platform-infra",
+        "environment": "development",
+        "dependencies": [
+          "redis"
+        ],
+        "trust_level": "low",
+        "resource_class": "standard",
+        "runtime_class": "nodejs",
+        "capabilities": [
+          "read:queue",
+          "write:queue"
+        ],
+        "labels": {
+          "app": "queue",
+          "tier": "backend"
+        }
+      },
+      "routing": {
+        "internal_dns": "http://queue",
+        "container_name": "sj-queue",
+        "paths": [
+          "/api/v1/queue"
+        ]
+      },
+      "security": {
+        "tls_required": false,
+        "allowed_sources": [
+          "api-gateway",
+          "auth",
+          "notification"
+        ]
+      },
+      "timeouts": {
+        "connect_ms": 1000,
+        "read_ms": 5000,
+        "write_ms": 5000,
+        "request_ms": 7000
+      },
+      "retry": {
+        "type": "linear",
+        "max_attempts": 3,
+        "base_delay_ms": 200,
+        "max_delay_ms": 1000
+      },
+      "circuit_breaker": {
+        "failure_threshold": 5,
+        "recovery_timeout_ms": 5000,
+        "half_open_max_requests": 2
+      },
+      "load_balancer": {
+        "strategy": "round_robin"
+      },
+      "telemetry": {
+        "health_endpoint": "/health",
+        "ready_endpoint": "/ready",
+        "metrics_endpoint": "/metrics"
+      },
+      "kubernetes": {
+        "service_name": "queue-service",
+        "namespace": "sj-services",
+        "port": 80
+      },
+      "identity": {
+        "serviceId": "queue",
+        "namespace": "sj-services",
+        "environment": "development",
+        "version": "1.0.0",
+        "owner": "platform-infra",
+        "trustLevel": "low",
+        "capabilities": [
+          "read:queue",
+          "write:queue"
+        ],
+        "labels": {
+          "app": "queue",
+          "tier": "backend"
+        },
+        "metadata": {
+          "resourceClass": "standard",
+          "network": "sj-services",
+          "visibility": "private",
+          "runtimeClass": "nodejs",
+          "dependencies": [
+            "redis"
+          ]
+        },
+        "spiffeId": "spiffe://sjcloud.io/ns/sj-services/sa/queue"
+      },
+      "policies": {
+        "timeouts": {
+          "connect_ms": 1000,
+          "read_ms": 5000,
+          "write_ms": 5000,
+          "request_ms": 7000
+        },
+        "retry": {
+          "type": "linear",
+          "max_attempts": 3,
+          "base_delay_ms": 200,
+          "max_delay_ms": 1000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 5,
+          "recovery_timeout_ms": 5000,
+          "half_open_max_requests": 2
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "security": {
+          "tls_required": false,
+          "allowed_sources": [
+            "api-gateway",
+            "auth",
+            "notification"
+          ]
+        }
+      },
+      "spec": {
+        "service": {
+          "id": "queue",
+          "name": "Message Queue Service",
+          "version": "1.0.0",
+          "protocol": "http",
+          "visibility": "private",
+          "network": "sj-services",
+          "owner": "platform-infra",
+          "environment": "development",
+          "dependencies": [
+            "redis"
+          ],
+          "trust_level": "low",
+          "resource_class": "standard",
+          "runtime_class": "nodejs",
+          "capabilities": [
+            "read:queue",
+            "write:queue"
+          ],
+          "labels": {
+            "app": "queue",
+            "tier": "backend"
+          }
+        },
+        "routing": {
+          "internal_dns": "http://queue",
+          "container_name": "sj-queue",
+          "paths": [
+            "/api/v1/queue"
+          ]
+        },
+        "security": {
+          "tls_required": false,
+          "allowed_sources": [
+            "api-gateway",
+            "auth",
+            "notification"
+          ]
+        },
+        "timeouts": {
+          "connect_ms": 1000,
+          "read_ms": 5000,
+          "write_ms": 5000,
+          "request_ms": 7000
+        },
+        "retry": {
+          "type": "linear",
+          "max_attempts": 3,
+          "base_delay_ms": 200,
+          "max_delay_ms": 1000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 5,
+          "recovery_timeout_ms": 5000,
+          "half_open_max_requests": 2
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "telemetry": {
+          "health_endpoint": "/health",
+          "ready_endpoint": "/ready",
+          "metrics_endpoint": "/metrics"
+        },
+        "kubernetes": {
+          "service_name": "queue-service",
+          "namespace": "sj-services",
+          "port": 80
+        }
+      }
+    },
+    "search": {
+      "service": {
+        "id": "search",
+        "name": "Search Indexing Service",
+        "version": "1.0.0",
+        "protocol": "http",
+        "visibility": "private",
+        "network": "sj-services",
+        "owner": "platform-core",
+        "environment": "development",
+        "dependencies": [
+          "postgres"
+        ],
+        "trust_level": "low",
+        "resource_class": "standard",
+        "runtime_class": "nodejs",
+        "capabilities": [
+          "read:search",
+          "write:search"
+        ],
+        "labels": {
+          "app": "search",
+          "tier": "backend"
+        }
+      },
+      "routing": {
+        "internal_dns": "http://search",
+        "container_name": "sj-search",
+        "paths": [
+          "/api/v1/search"
+        ]
+      },
+      "security": {
+        "tls_required": false,
+        "allowed_sources": [
+          "api-gateway"
+        ]
+      },
+      "timeouts": {
+        "connect_ms": 1500,
+        "read_ms": 5000,
+        "write_ms": 5000,
+        "request_ms": 8000
+      },
+      "retry": {
+        "type": "exponential_backoff",
+        "max_attempts": 3,
+        "base_delay_ms": 100,
+        "max_delay_ms": 2000
+      },
+      "circuit_breaker": {
+        "failure_threshold": 5,
+        "recovery_timeout_ms": 10000,
+        "half_open_max_requests": 2
+      },
+      "load_balancer": {
+        "strategy": "round_robin"
+      },
+      "telemetry": {
+        "health_endpoint": "/health",
+        "ready_endpoint": "/ready",
+        "metrics_endpoint": "/metrics"
+      },
+      "kubernetes": {
+        "service_name": "search-service",
+        "namespace": "sj-services",
+        "port": 80
+      },
+      "identity": {
+        "serviceId": "search",
+        "namespace": "sj-services",
+        "environment": "development",
+        "version": "1.0.0",
+        "owner": "platform-core",
+        "trustLevel": "low",
+        "capabilities": [
+          "read:search",
+          "write:search"
+        ],
+        "labels": {
+          "app": "search",
+          "tier": "backend"
+        },
+        "metadata": {
+          "resourceClass": "standard",
+          "network": "sj-services",
+          "visibility": "private",
+          "runtimeClass": "nodejs",
+          "dependencies": [
+            "postgres"
+          ]
+        },
+        "spiffeId": "spiffe://sjcloud.io/ns/sj-services/sa/search"
+      },
+      "policies": {
+        "timeouts": {
+          "connect_ms": 1500,
+          "read_ms": 5000,
+          "write_ms": 5000,
+          "request_ms": 8000
+        },
+        "retry": {
+          "type": "exponential_backoff",
+          "max_attempts": 3,
+          "base_delay_ms": 100,
+          "max_delay_ms": 2000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 5,
+          "recovery_timeout_ms": 10000,
+          "half_open_max_requests": 2
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "security": {
+          "tls_required": false,
+          "allowed_sources": [
+            "api-gateway"
+          ]
+        }
+      },
+      "spec": {
+        "service": {
+          "id": "search",
+          "name": "Search Indexing Service",
+          "version": "1.0.0",
+          "protocol": "http",
+          "visibility": "private",
+          "network": "sj-services",
+          "owner": "platform-core",
+          "environment": "development",
+          "dependencies": [
+            "postgres"
+          ],
+          "trust_level": "low",
+          "resource_class": "standard",
+          "runtime_class": "nodejs",
+          "capabilities": [
+            "read:search",
+            "write:search"
+          ],
+          "labels": {
+            "app": "search",
+            "tier": "backend"
+          }
+        },
+        "routing": {
+          "internal_dns": "http://search",
+          "container_name": "sj-search",
+          "paths": [
+            "/api/v1/search"
+          ]
+        },
+        "security": {
+          "tls_required": false,
+          "allowed_sources": [
+            "api-gateway"
+          ]
+        },
+        "timeouts": {
+          "connect_ms": 1500,
+          "read_ms": 5000,
+          "write_ms": 5000,
+          "request_ms": 8000
+        },
+        "retry": {
+          "type": "exponential_backoff",
+          "max_attempts": 3,
+          "base_delay_ms": 100,
+          "max_delay_ms": 2000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 5,
+          "recovery_timeout_ms": 10000,
+          "half_open_max_requests": 2
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "telemetry": {
+          "health_endpoint": "/health",
+          "ready_endpoint": "/ready",
+          "metrics_endpoint": "/metrics"
+        },
+        "kubernetes": {
+          "service_name": "search-service",
+          "namespace": "sj-services",
+          "port": 80
+        }
+      }
+    },
+    "storage": {
+      "service": {
+        "id": "storage",
+        "name": "Storage Service",
+        "version": "1.0.0",
+        "protocol": "http",
+        "visibility": "private",
+        "network": "sj-services",
+        "owner": "platform-storage",
+        "environment": "development",
+        "dependencies": [
+          "postgres",
+          "minio"
+        ],
+        "trust_level": "low",
+        "resource_class": "standard",
+        "runtime_class": "nodejs",
+        "capabilities": [
+          "read:storage",
+          "write:storage"
+        ],
+        "labels": {
+          "app": "storage",
+          "tier": "backend"
+        }
+      },
+      "routing": {
+        "internal_dns": "http://storage",
+        "container_name": "sj-storage",
+        "paths": [
+          "/api/v1/storage"
+        ]
+      },
+      "security": {
+        "tls_required": false,
+        "allowed_sources": [
+          "api-gateway",
+          "analytics"
+        ]
+      },
+      "timeouts": {
+        "connect_ms": 1500,
+        "read_ms": 10000,
+        "write_ms": 30000,
+        "request_ms": 45000
+      },
+      "retry": {
+        "type": "exponential_backoff",
+        "max_attempts": 2,
+        "base_delay_ms": 200,
+        "max_delay_ms": 5000
+      },
+      "circuit_breaker": {
+        "failure_threshold": 3,
+        "recovery_timeout_ms": 15000,
+        "half_open_max_requests": 1
+      },
+      "load_balancer": {
+        "strategy": "round_robin"
+      },
+      "telemetry": {
+        "health_endpoint": "/health",
+        "ready_endpoint": "/ready",
+        "metrics_endpoint": "/metrics"
+      },
+      "scaling": {
+        "min_replicas": 2,
+        "max_replicas": 5
+      },
+      "resources": {
+        "class": "high_memory",
+        "cpu": "1.0",
+        "memory": "2Gi"
+      },
+      "kubernetes": {
+        "service_name": "storage-service",
+        "namespace": "sj-services",
+        "port": 80
+      },
+      "identity": {
+        "serviceId": "storage",
+        "namespace": "sj-services",
+        "environment": "development",
+        "version": "1.0.0",
+        "owner": "platform-storage",
+        "trustLevel": "low",
+        "capabilities": [
+          "read:storage",
+          "write:storage"
+        ],
+        "labels": {
+          "app": "storage",
+          "tier": "backend"
+        },
+        "metadata": {
+          "resourceClass": "standard",
+          "network": "sj-services",
+          "visibility": "private",
+          "runtimeClass": "nodejs",
+          "dependencies": [
+            "postgres",
+            "minio"
+          ]
+        },
+        "spiffeId": "spiffe://sjcloud.io/ns/sj-services/sa/storage"
+      },
+      "policies": {
+        "timeouts": {
+          "connect_ms": 1500,
+          "read_ms": 5000,
+          "write_ms": 30000,
+          "request_ms": 45000
+        },
+        "retry": {
+          "type": "exponential_backoff",
+          "max_attempts": 2,
+          "base_delay_ms": 200,
+          "max_delay_ms": 5000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 3,
+          "recovery_timeout_ms": 15000,
+          "half_open_max_requests": 1
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "security": {
+          "tls_required": false,
+          "allowed_sources": [
+            "api-gateway",
+            "analytics"
+          ]
+        }
+      },
+      "spec": {
+        "service": {
+          "id": "storage",
+          "name": "Storage Service",
+          "version": "1.0.0",
+          "protocol": "http",
+          "visibility": "private",
+          "network": "sj-services",
+          "owner": "platform-storage",
+          "environment": "development",
+          "dependencies": [
+            "postgres",
+            "minio"
+          ],
+          "trust_level": "low",
+          "resource_class": "standard",
+          "runtime_class": "nodejs",
+          "capabilities": [
+            "read:storage",
+            "write:storage"
+          ],
+          "labels": {
+            "app": "storage",
+            "tier": "backend"
+          }
+        },
+        "routing": {
+          "internal_dns": "http://storage",
+          "container_name": "sj-storage",
+          "paths": [
+            "/api/v1/storage"
+          ]
+        },
+        "security": {
+          "tls_required": false,
+          "allowed_sources": [
+            "api-gateway",
+            "analytics"
+          ]
+        },
+        "timeouts": {
+          "connect_ms": 1500,
+          "read_ms": 10000,
+          "write_ms": 30000,
+          "request_ms": 45000
+        },
+        "retry": {
+          "type": "exponential_backoff",
+          "max_attempts": 2,
+          "base_delay_ms": 200,
+          "max_delay_ms": 5000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 3,
+          "recovery_timeout_ms": 15000,
+          "half_open_max_requests": 1
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "telemetry": {
+          "health_endpoint": "/health",
+          "ready_endpoint": "/ready",
+          "metrics_endpoint": "/metrics"
+        },
+        "scaling": {
+          "min_replicas": 2,
+          "max_replicas": 5
+        },
+        "resources": {
+          "class": "high_memory",
+          "cpu": "1.0",
+          "memory": "2Gi"
+        },
+        "kubernetes": {
+          "service_name": "storage-service",
+          "namespace": "sj-services",
+          "port": 80
+        }
+      }
+    },
+    "tenant-manager": {
+      "service": {
+        "id": "tenant-manager",
+        "name": "Tenant Manager Service",
+        "version": "1.0.0",
+        "protocol": "http",
+        "visibility": "private",
+        "network": "sj-services",
+        "owner": "platform-core",
+        "environment": "development",
+        "dependencies": [
+          "postgres"
+        ],
+        "trust_level": "low",
+        "resource_class": "standard",
+        "runtime_class": "nodejs",
+        "capabilities": [
+          "read:tenant-manager",
+          "write:tenant-manager"
+        ],
+        "labels": {
+          "app": "tenant-manager",
+          "tier": "backend"
+        }
+      },
+      "routing": {
+        "internal_dns": "http://tenant-manager",
+        "container_name": "sj-tenant-manager",
+        "paths": [
+          "/api/v1/tenants"
+        ]
+      },
+      "security": {
+        "tls_required": false,
+        "allowed_sources": [
+          "api-gateway"
+        ]
+      },
+      "timeouts": {
+        "connect_ms": 1500,
+        "read_ms": 5000,
+        "write_ms": 5000,
+        "request_ms": 8000
+      },
+      "retry": {
+        "type": "exponential_backoff",
+        "max_attempts": 3,
+        "base_delay_ms": 100,
+        "max_delay_ms": 2000
+      },
+      "circuit_breaker": {
+        "failure_threshold": 5,
+        "recovery_timeout_ms": 10000,
+        "half_open_max_requests": 2
+      },
+      "load_balancer": {
+        "strategy": "round_robin"
+      },
+      "telemetry": {
+        "health_endpoint": "/health",
+        "ready_endpoint": "/ready",
+        "metrics_endpoint": "/metrics"
+      },
+      "kubernetes": {
+        "service_name": "tenant-manager-service",
+        "namespace": "sj-services",
+        "port": 80
+      },
+      "identity": {
+        "serviceId": "tenant-manager",
+        "namespace": "sj-services",
+        "environment": "development",
+        "version": "1.0.0",
+        "owner": "platform-core",
+        "trustLevel": "low",
+        "capabilities": [
+          "read:tenant-manager",
+          "write:tenant-manager"
+        ],
+        "labels": {
+          "app": "tenant-manager",
+          "tier": "backend"
+        },
+        "metadata": {
+          "resourceClass": "standard",
+          "network": "sj-services",
+          "visibility": "private",
+          "runtimeClass": "nodejs",
+          "dependencies": [
+            "postgres"
+          ]
+        },
+        "spiffeId": "spiffe://sjcloud.io/ns/sj-services/sa/tenant-manager"
+      },
+      "policies": {
+        "timeouts": {
+          "connect_ms": 1500,
+          "read_ms": 5000,
+          "write_ms": 5000,
+          "request_ms": 8000
+        },
+        "retry": {
+          "type": "exponential_backoff",
+          "max_attempts": 3,
+          "base_delay_ms": 100,
+          "max_delay_ms": 2000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 5,
+          "recovery_timeout_ms": 10000,
+          "half_open_max_requests": 2
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "security": {
+          "tls_required": false,
+          "allowed_sources": [
+            "api-gateway"
+          ]
+        }
+      },
+      "spec": {
+        "service": {
+          "id": "tenant-manager",
+          "name": "Tenant Manager Service",
+          "version": "1.0.0",
+          "protocol": "http",
+          "visibility": "private",
+          "network": "sj-services",
+          "owner": "platform-core",
+          "environment": "development",
+          "dependencies": [
+            "postgres"
+          ],
+          "trust_level": "low",
+          "resource_class": "standard",
+          "runtime_class": "nodejs",
+          "capabilities": [
+            "read:tenant-manager",
+            "write:tenant-manager"
+          ],
+          "labels": {
+            "app": "tenant-manager",
+            "tier": "backend"
+          }
+        },
+        "routing": {
+          "internal_dns": "http://tenant-manager",
+          "container_name": "sj-tenant-manager",
+          "paths": [
+            "/api/v1/tenants"
+          ]
+        },
+        "security": {
+          "tls_required": false,
+          "allowed_sources": [
+            "api-gateway"
+          ]
+        },
+        "timeouts": {
+          "connect_ms": 1500,
+          "read_ms": 5000,
+          "write_ms": 5000,
+          "request_ms": 8000
+        },
+        "retry": {
+          "type": "exponential_backoff",
+          "max_attempts": 3,
+          "base_delay_ms": 100,
+          "max_delay_ms": 2000
+        },
+        "circuit_breaker": {
+          "failure_threshold": 5,
+          "recovery_timeout_ms": 10000,
+          "half_open_max_requests": 2
+        },
+        "load_balancer": {
+          "strategy": "round_robin"
+        },
+        "telemetry": {
+          "health_endpoint": "/health",
+          "ready_endpoint": "/ready",
+          "metrics_endpoint": "/metrics"
+        },
+        "kubernetes": {
+          "service_name": "tenant-manager-service",
+          "namespace": "sj-services",
+          "port": 80
+        }
+      }
+    }
+  },
+  "compiledAt": "2026-08-01T10:03:06.509Z",
+  "version": "1.0.0",
+  "buildNumber": 4,
+  "compilerVersion": "1.0.0",
+  "registryVersion": "1.0.0",
+  "gitCommit": "local-dev",
+  "dependencyGraph": {
+    "nodes": [
+      "analytics",
+      "api-gateway",
+      "audit",
+      "auth",
+      "billing",
+      "notification",
+      "queue",
+      "search",
+      "storage",
+      "tenant-manager",
+      "postgres",
+      "redis",
+      "minio"
+    ],
+    "edges": [
+      {
+        "from": "analytics",
+        "to": "postgres"
+      },
+      {
+        "from": "analytics",
+        "to": "redis"
+      },
+      {
+        "from": "analytics",
+        "to": "storage"
+      },
+      {
+        "from": "api-gateway",
+        "to": "redis"
+      },
+      {
+        "from": "audit",
+        "to": "postgres"
+      },
+      {
+        "from": "auth",
+        "to": "postgres"
+      },
+      {
+        "from": "auth",
+        "to": "redis"
+      },
+      {
+        "from": "billing",
+        "to": "postgres"
+      },
+      {
+        "from": "billing",
+        "to": "redis"
+      },
+      {
+        "from": "notification",
+        "to": "redis"
+      },
+      {
+        "from": "queue",
+        "to": "redis"
+      },
+      {
+        "from": "search",
+        "to": "postgres"
+      },
+      {
+        "from": "storage",
+        "to": "postgres"
+      },
+      {
+        "from": "storage",
+        "to": "minio"
+      },
+      {
+        "from": "tenant-manager",
+        "to": "postgres"
+      }
+    ]
+  },
+  "sha256": "9852ddf0f2886a8a607cd76aad0d81a3adf3bd42d2867178e3b3716d1cea8c90"
+}

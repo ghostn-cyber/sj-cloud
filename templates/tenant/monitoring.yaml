@@ -1,0 +1,9 @@
+monitoring:
+  prometheus:
+    enabled: true
+    path: "/metrics"
+    interval: "15s"
+  logging:
+    driver: "json-file"
+    max_size: "10m"
+    max_files: "3"

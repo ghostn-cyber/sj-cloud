@@ -1,0 +1,61 @@
+apiVersion: mesh.sjcloud.io/v1alpha1
+kind: Service
+schemaVersion: 1
+metadata:
+  name: analytics
+spec:
+  service:
+    id: analytics
+    name: Analytics Service
+    version: 1.0.0
+    protocol: http
+    visibility: private
+    network: sj-services
+    owner: platform-bi
+    environment: development
+    dependencies:
+      - postgres
+      - redis
+      - storage
+    trust_level: low
+    resource_class: standard
+    runtime_class: nodejs
+    capabilities:
+      - read:analytics
+      - write:analytics
+    labels:
+      app: analytics
+      tier: backend
+  routing:
+    internal_dns: http://analytics
+    container_name: sj-analytics
+    paths:
+      - /api/v1/analytics
+  security:
+    tls_required: false
+    allowed_sources:
+      - api-gateway
+  timeouts:
+    connect_ms: 2000
+    read_ms: 15000
+    write_ms: 15000
+    request_ms: 30000
+  retry:
+    type: linear
+    max_attempts: 2
+    base_delay_ms: 500
+    max_delay_ms: 2000
+  circuit_breaker:
+    failure_threshold: 3
+    recovery_timeout_ms: 20000
+    half_open_max_requests: 1
+  load_balancer:
+    strategy: round_robin
+  telemetry:
+    health_endpoint: /health
+    ready_endpoint: /ready
+    metrics_endpoint: /metrics
+  kubernetes:
+    service_name: analytics-service
+    namespace: sj-services
+    port: 80

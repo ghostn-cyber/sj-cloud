@@ -1,0 +1,12 @@
+apiVersion: plugins.sjcloud.io/v1alpha1
+kind: MeshPlugin
+metadata:
+  name: example-plugin
+spec:
+  version: 1.0.0
+  entrypoint: ./index.js
+  hooks:
+    - onStartup
+    - onRequest
+    - onResponse
+    - onShutdown

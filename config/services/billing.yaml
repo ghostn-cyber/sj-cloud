@@ -1,0 +1,60 @@
+apiVersion: mesh.sjcloud.io/v1alpha1
+kind: Service
+schemaVersion: 1
+metadata:
+  name: billing
+spec:
+  service:
+    id: billing
+    name: Billing and Subscription Service
+    version: 1.0.0
+    protocol: http
+    visibility: private
+    network: sj-services
+    owner: platform-finance
+    environment: development
+    dependencies:
+      - postgres
+      - redis
+    trust_level: low
+    resource_class: standard
+    runtime_class: nodejs
+    capabilities:
+      - read:billing
+      - write:billing
+    labels:
+      app: billing
+      tier: backend
+  routing:
+    internal_dns: http://billing
+    container_name: sj-billing
+    paths:
+      - /api/v1/billing
+  security:
+    tls_required: false
+    allowed_sources:
+      - api-gateway
+  timeouts:
+    connect_ms: 2000
+    read_ms: 10000
+    write_ms: 10000
+    request_ms: 15000
+  retry:
+    type: exponential_jitter
+    max_attempts: 3
+    base_delay_ms: 200
+    max_delay_ms: 3000
+  circuit_breaker:
+    failure_threshold: 3
+    recovery_timeout_ms: 15000
+    half_open_max_requests: 2
+  load_balancer:
+    strategy: round_robin
+  telemetry:
+    health_endpoint: /health
+    ready_endpoint: /ready
+    metrics_endpoint: /metrics
+  kubernetes:
+    service_name: billing-service
+    namespace: sj-services
+    port: 80

@@ -1,0 +1,61 @@
+apiVersion: mesh.sjcloud.io/v1alpha1
+kind: Service
+schemaVersion: 1
+metadata:
+  name: queue
+spec:
+  service:
+    id: queue
+    name: Message Queue Service
+    version: 1.0.0
+    protocol: http
+    visibility: private
+    network: sj-services
+    owner: platform-infra
+    environment: development
+    dependencies:
+      - redis
+    trust_level: low
+    resource_class: standard
+    runtime_class: nodejs
+    capabilities:
+      - read:queue
+      - write:queue
+    labels:
+      app: queue
+      tier: backend
+  routing:
+    internal_dns: http://queue
+    container_name: sj-queue
+    paths:
+      - /api/v1/queue
+  security:
+    tls_required: false
+    allowed_sources:
+      - api-gateway
+      - auth
+      - notification
+  timeouts:
+    connect_ms: 1000
+    read_ms: 5000
+    write_ms: 5000
+    request_ms: 7000
+  retry:
+    type: linear
+    max_attempts: 3
+    base_delay_ms: 200
+    max_delay_ms: 1000
+  circuit_breaker:
+    failure_threshold: 5
+    recovery_timeout_ms: 5000
+    half_open_max_requests: 2
+  load_balancer:
+    strategy: round_robin
+  telemetry:
+    health_endpoint: /health
+    ready_endpoint: /ready
+    metrics_endpoint: /metrics
+  kubernetes:
+    service_name: queue-service
+    namespace: sj-services
+    port: 80

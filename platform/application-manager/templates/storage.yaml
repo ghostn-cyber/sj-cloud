@@ -1,0 +1,4 @@
+volumes:
+  - name: app-data
+    mount_path: /app/data
+    size: 10Gi

@@ -1,0 +1,5 @@
+backups:
+  enabled: true
+  schedule: "0 2 * * *"
+  retention_days: 7
+  target_bucket: "sj-backups-{{tenant_id}}"

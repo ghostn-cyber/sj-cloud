@@ -1,0 +1,10 @@
+{
+  "name": "@sj-cloud/testing-mock-service",
+  "version": "1.0.0",
+  "description": "Mock platform service for integration testing",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "private": true
+}

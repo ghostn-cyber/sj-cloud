@@ -1,0 +1,5 @@
+networks:
+  - name: "sj-proxy"
+    external: true
+  - name: "sj-tenant-{{tenant_id}}"
+    driver: "bridge"
