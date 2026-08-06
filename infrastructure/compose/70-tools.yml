@@ -1,0 +1,185 @@
+services:
+  pgadmin:
+    image: dpage/pgadmin4:8.9
+    container_name: sj-pgadmin
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "5050:5050"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /var/lib/pgadmin
+      - /var/log/pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@sj-cloud.test}
+      PGADMIN_DEFAULT_PASSWORD_FILE: /run/secrets/postgres_password
+      PGADMIN_LISTEN_PORT: "80"
+    secrets:
+      - postgres_password
+    networks:
+      - sj-data
+      - sj-proxy
+    deploy:
+      resources:
+        limits:
+          pids: 50
+          cpus: '0.4'
+          memory: 256M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost/misc/ping || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redisinsight:
+    image: redis/redisinsight:2.52
+    container_name: sj-redisinsight
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /data:uid=1000,gid=1000,mode=777
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "8001:8001"
+    networks:
+      - sj-data
+      - sj-proxy
+    deploy:
+      resources:
+        limits:
+          pids: 50
+          cpus: '0.4'
+          memory: 256M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:5540/ || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  mailpit:
+    image: axllent/mailpit:v1.18
+    container_name: sj-mailpit
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    networks:
+      - sj-services
+      - sj-proxy
+    deploy:
+      resources:
+        limits:
+          pids: 50
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:8025/api/v1/info || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  adminer:
+    image: adminer:4.8.1
+    container_name: sj-adminer
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "8088:8080"
+    networks:
+      - sj-data
+      - sj-proxy
+    deploy:
+      resources:
+        limits:
+          pids: 50
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    healthcheck:
+      test: ["CMD", "php", "-r", "file_get_contents('http://localhost:8080/') or exit(1);"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+networks:
+  sj-proxy:
+    external: true
+  sj-data:
+    external: true
+  sj-services:
+    external: true
+
+secrets:
+  postgres_password:
+    file: ../secrets/postgres_password

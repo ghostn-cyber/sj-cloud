@@ -45,9 +45,10 @@ class SecretRotation {
       const dbUser = `sj_user_${tenantId.replace(/-/g, '_')}`;
       try {
         execSync('which psql', { stdio: 'ignore' });
-        const host = process.env.PGHOST || 'localhost';
-        const adminUser = process.env.PGUSER || 'postgres';
-        const adminPass = process.env.PGPASSWORD || 'postgres';
+        const { DatabaseConfig, SecurityConfig } = require('../../shared/config/config-context');
+        const host = DatabaseConfig.POSTGRES_HOST || 'localhost';
+        const adminUser = 'postgres'; // psql admin username is postgres
+        const adminPass = SecurityConfig.POSTGRES_PASSWORD || 'postgres';
         const alterCmd = `PGPASSWORD="${adminPass}" psql -h ${host} -U ${adminUser} -d postgres -c "ALTER ROLE ${dbUser} WITH PASSWORD '${newPassword}';"`;
         execSync(alterCmd, { stdio: 'ignore' });
       } catch (err) {

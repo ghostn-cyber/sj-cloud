@@ -49,9 +49,10 @@ class ActualState {
     let dbExists = false;
     try {
       execSync('which psql', { stdio: 'ignore' });
-      const host = process.env.PGHOST || 'localhost';
-      const adminUser = process.env.PGUSER || 'postgres';
-      const adminPass = process.env.PGPASSWORD || 'postgres';
+      const { DatabaseConfig, SecurityConfig } = require('../../shared/config/config-context');
+      const host = DatabaseConfig.POSTGRES_HOST || 'localhost';
+      const adminUser = 'postgres';
+      const adminPass = SecurityConfig.POSTGRES_PASSWORD || 'postgres';
       const dbName = `sj_tenant_${tenantId.replace(/-/g, '_')}`;
       
       const checkCmd = `PGPASSWORD="${adminPass}" psql -h ${host} -U ${adminUser} -d postgres -t -c "SELECT 1 FROM pg_database WHERE datname='${dbName}';"`;

@@ -43,23 +43,26 @@ create_network() {
   "${cmd[@]}"
 }
 
-# 1. sj-edge
-create_network "sj-edge" "172.20.0.0/24" "false" "External entry network. Receives traffic from host and connects only to Traefik proxy. Publishes ports 80 and 443."
+# Cleanup old networks if they exist
+echo "Cleaning up old/deprecated networks..."
+for net in sj-proxy sj-services sj-data sj-monitoring sj-backup sj-ingress sj-control-plane sj-runtime sj-storage sj-observability sj-build sj-ci; do
+  if docker network inspect "$net" >/dev/null 2>&1; then
+    echo "Removing network $net..."
+    docker network rm "$net" || true
+  fi
+done
 
-# 2. sj-proxy
-create_network "sj-proxy" "172.20.1.0/24" "true" "Reverse proxy routing network connecting Traefik, API Gateway, Dashboard, Docs, and Status. No databases or storage."
-
-# 3. sj-services
-create_network "sj-services" "172.20.2.0/24" "true" "Internal service network for Auth, Notifications, Queue, Search, Analytics, Audit, Storage API, and Tenant Applications."
-
-# 4. sj-data
-create_network "sj-data" "172.20.3.0/24" "true" "Private database and storage network for PostgreSQL, Redis, and MinIO. No public access or published ports."
-
-# 5. sj-monitoring
-create_network "sj-monitoring" "172.20.4.0/24" "true" "Observability network connecting Prometheus, Grafana, Loki, and AlertManager for metrics/log scraping."
-
-# 6. sj-backup
-create_network "sj-backup" "172.20.5.0/24" "true" "Isolated database and storage backup and restore network. No application or request traffic."
+# Create the 10 networks according to the zero-trust architecture
+create_network "sj-edge" "172.20.0.0/24" "false" "Edge ingress network"
+create_network "sj-proxy" "172.20.1.0/24" "true" "Private ingress proxy network"
+create_network "sj-control-plane" "172.20.2.0/24" "true" "Control plane network"
+create_network "sj-services" "172.20.3.0/24" "true" "Internal microservices runtime network"
+create_network "sj-data" "172.20.4.0/24" "true" "Private storage network (Postgres, Redis, MinIO)"
+create_network "sj-monitoring" "172.20.5.0/24" "true" "Internal metrics scraping network"
+create_network "sj-observability" "172.20.6.0/24" "true" "Internal logs and tracing network"
+create_network "sj-backup" "172.20.7.0/24" "true" "Isolated backup/restore network"
+create_network "sj-build" "172.20.8.0/24" "true" "Build pipeline network"
+create_network "sj-ci" "172.20.9.0/24" "true" "Continuous integration sandbox network"
 
 echo "=========================================="
 echo "All networks successfully created!"

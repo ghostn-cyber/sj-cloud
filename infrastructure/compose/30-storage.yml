@@ -1,0 +1,265 @@
+services:
+  postgres-permission-fix:
+    image: alpine:latest
+    container_name: sj-postgres-permission-fix
+    user: "0:0"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+    volumes:
+      - sj-postgres-data:/var/lib/postgresql
+    command: chown -R 999:999 /var/lib/postgresql
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 32M
+          pids: 10
+
+  postgres:
+    image: postgres:latest
+    container_name: sj-postgres
+    depends_on:
+      postgres-permission-fix:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "999:999"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql:uid=999,gid=999,mode=777
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - sj-postgres-data:/var/lib/postgresql
+      - ../postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ../postgres/postgres.conf:/etc/postgresql/postgresql.conf:ro
+      - ../postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf -c hba_file=/etc/postgresql/pg_hba.conf
+    environment:
+      POSTGRES_USER: ${DB_USER:-sjcloud}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_DB: ${DB_NAME:-sjcloud}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    secrets:
+      - postgres_password
+    networks:
+      - sj-data
+      - sj-backup
+    deploy:
+      resources:
+        limits:
+          cpus: '0.8'
+          memory: 512M
+          pids: 100
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  redis:
+    image: redis:alpine
+    container_name: sj-redis
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "999:999"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - sj-redis-data:/data
+      - ../redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: ["/bin/sh", "-c", "redis-server /usr/local/etc/redis/redis.conf --requirepass $$(cat /run/secrets/redis_password)"]
+    secrets:
+      - redis_password
+    networks:
+      - sj-data
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+          pids: 50
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$(cat /run/secrets/redis_password)\" ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  minio-permission-fix:
+    image: alpine:latest
+    container_name: sj-minio-permission-fix
+    user: "0:0"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+    volumes:
+      - sj-minio-data:/data
+    command: chown -R 1000:1000 /data
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 32M
+          pids: 10
+
+  minio:
+    image: minio/minio:RELEASE.2024-07-10T18-41-49Z
+    container_name: sj-minio
+    depends_on:
+      minio-permission-fix:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - sj-minio-data:/data
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER_FILE: /run/secrets/minio_root_user
+      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio_root_password
+    secrets:
+      - minio_root_user
+      - minio_root_password
+    networks:
+      - sj-data
+      - sj-backup
+      - sj-proxy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.6'
+          memory: 512M
+          pids: 100
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  minio-bootstrap:
+    image: minio/mc:latest
+    container_name: sj-minio-bootstrap
+    depends_on:
+      minio:
+        condition: service_healthy
+    init: true
+    read_only: true
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    volumes:
+      - ../minio/bootstrap.sh:/bootstrap.sh:ro
+    entrypoint: ["/bin/sh", "/bootstrap.sh"]
+    environment:
+      MINIO_ROOT_USER_FILE: /run/secrets/minio_root_user
+      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio_root_password
+      MC_CONFIG_DIR: /tmp/.mc
+    secrets:
+      - minio_root_user
+      - minio_root_password
+    networks:
+      - sj-data
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "1"
+
+networks:
+  sj-proxy:
+    external: true
+  sj-data:
+    external: true
+  sj-backup:
+    external: true
+
+volumes:
+  sj-postgres-data:
+    name: sj-postgres-data
+  sj-redis-data:
+    name: sj-redis-data
+  sj-minio-data:
+    name: sj-minio-data
+
+secrets:
+  postgres_password:
+    file: ../secrets/postgres_password
+  redis_password:
+    file: ../secrets/redis_password
+  minio_root_user:
+    file: ../secrets/minio_root_user
+  minio_root_password:
+    file: ../secrets/minio_root_password

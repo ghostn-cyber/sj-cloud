@@ -1,0 +1,448 @@
+services:
+  mock-auth:
+    build:
+      context: ../../platform/testing/mock-service
+    container_name: sj-auth
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    environment:
+      - SERVICE_ID=auth
+      - PORT=80
+    networks:
+      - sj-services
+    deploy:
+      resources:
+        limits:
+          pids: 50
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  mock-storage:
+    build:
+      context: ../../platform/testing/mock-service
+    container_name: sj-storage
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    environment:
+      - SERVICE_ID=storage
+      - PORT=80
+    networks:
+      - sj-services
+    deploy:
+      resources:
+        limits:
+          pids: 50
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  mock-notification:
+    build:
+      context: ../../platform/testing/mock-service
+    container_name: sj-notification
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    environment:
+      - SERVICE_ID=notification
+      - PORT=80
+    networks:
+      - sj-services
+    deploy:
+      resources:
+        limits:
+          pids: 50
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  mock-analytics:
+    build:
+      context: ../../platform/testing/mock-service
+    container_name: sj-analytics
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    environment:
+      - SERVICE_ID=analytics
+      - PORT=80
+    networks:
+      - sj-services
+    deploy:
+      resources:
+        limits:
+          pids: 50
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  mock-audit:
+    build:
+      context: ../../platform/testing/mock-service
+    container_name: sj-audit
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    environment:
+      - SERVICE_ID=audit
+      - PORT=80
+    networks:
+      - sj-services
+    deploy:
+      resources:
+        limits:
+          pids: 50
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  mock-search:
+    build:
+      context: ../../platform/testing/mock-service
+    container_name: sj-search
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    environment:
+      - SERVICE_ID=search
+      - PORT=80
+    networks:
+      - sj-services
+    deploy:
+      resources:
+        limits:
+          pids: 50
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  mock-queue:
+    build:
+      context: ../../platform/testing/mock-service
+    container_name: sj-queue
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    environment:
+      - SERVICE_ID=queue
+      - PORT=80
+    networks:
+      - sj-services
+    deploy:
+      resources:
+        limits:
+          pids: 50
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  mock-api-gateway:
+    build:
+      context: ../../platform/testing/mock-service
+    container_name: sj-api-gateway
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    environment:
+      - SERVICE_ID=api-gateway
+      - PORT=80
+    networks:
+      - sj-services
+      - sj-proxy
+    deploy:
+      resources:
+        limits:
+          pids: 50
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  mock-tenant-manager:
+    build:
+      context: ../..
+      dockerfile: platform/dashboard/Dockerfile
+    container_name: sj-tenant-manager
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - ../../config:/app/config:ro
+      - ../../tenants:/app/tenants:ro
+    environment:
+      - SERVICE_ID=tenant-manager
+      - PORT=80
+    networks:
+      - sj-services
+      - sj-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard-controlplane.entrypoints=websecure"
+      - "traefik.http.routers.dashboard-controlplane.rule=Host(`dashboard.sj-cloud.test`) || Host(`dashboard.platform.test`)"
+      - "traefik.http.routers.dashboard-controlplane.tls=true"
+      - "traefik.http.services.dashboard-controlplane.loadbalancer.server.port=80"
+    deploy:
+      resources:
+        limits:
+          pids: 50
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  mock-billing:
+    build:
+      context: ../../platform/testing/mock-service
+    container_name: sj-billing
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    environment:
+      - SERVICE_ID=billing
+      - PORT=80
+    networks:
+      - sj-services
+    deploy:
+      resources:
+        limits:
+          pids: 50
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+networks:
+  sj-proxy:
+    external: true
+  sj-services:
+    external: true

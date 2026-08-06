@@ -67,16 +67,16 @@ echo "✅ Static api.insecure is disabled (api.insecure=false)."
 
 # 7. Verify dynamic configurations loaded via Traefik API
 echo "Verifying Traefik dynamic configuration via internal API..."
-RAWDATA=$(curl -k -s -u "admin:sjcloudadmin" --resolve "dashboard.platform.test:443:127.0.0.1" https://dashboard.platform.test/api/rawdata)
+RAWDATA=$(curl -k -s -u "admin:sjcloudadmin" --resolve "traefik.sj-cloud.test:443:127.0.0.1" https://traefik.sj-cloud.test/api/rawdata)
 
 # Assert dashboard router is enabled and uses basic auth middleware
-DASHBOARD_ROUTER_STATUS=$(echo "${RAWDATA}" | jq -r '.routers["dashboard@file"].status // empty')
+DASHBOARD_ROUTER_STATUS=$(echo "${RAWDATA}" | jq -r '.routers["traefik-dashboard@file"].status // empty')
 if [ "${DASHBOARD_ROUTER_STATUS}" != "enabled" ]; then
   echo "❌ Error: dashboard router is NOT active!"
   exit 1
 fi
 
-DASHBOARD_MIDDLEWARES=$(echo "${RAWDATA}" | jq -r '.routers["dashboard@file"].middlewares[] // empty')
+DASHBOARD_MIDDLEWARES=$(echo "${RAWDATA}" | jq -r '.routers["traefik-dashboard@file"].middlewares[] // empty')
 if [[ ! "${DASHBOARD_MIDDLEWARES}" =~ "dashboard-auth@file" ]]; then
   echo "❌ Error: dashboard router does NOT have dashboard-auth middleware attached!"
   exit 1

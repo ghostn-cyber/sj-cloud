@@ -1,5 +1,5 @@
 ingress:
   domains:
-    - app.platform.test
+    - app.sj-cloud.test
   tls: true
   port: 8080

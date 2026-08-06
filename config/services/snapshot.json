@@ -1982,9 +1982,9 @@
       }
     }
   },
-  "compiledAt": "2026-08-01T10:03:06.509Z",
+  "compiledAt": "2026-08-06T23:25:47.341Z",
   "version": "1.0.0",
-  "buildNumber": 4,
+  "buildNumber": 5,
   "compilerVersion": "1.0.0",
   "registryVersion": "1.0.0",
   "gitCommit": "local-dev",
@@ -2067,5 +2067,5 @@
       }
     ]
   },
-  "sha256": "9852ddf0f2886a8a607cd76aad0d81a3adf3bd42d2867178e3b3716d1cea8c90"
+  "sha256": "2b73605f81f1b59026493e1fbe6b5bb39c4a890f4f036d1ff60baa25bbca08ae"
 }

@@ -1,0 +1,47 @@
+pipeline_id: default-worker-pipeline
+tenant_id: default-tenant
+application_id: default-app
+trigger:
+  type: push
+  branch: main
+stages:
+  - name: Checkout
+    steps:
+      - name: Git Clone
+        run: git clone
+  - name: Install
+    steps:
+      - name: Install Dependencies
+        run: npm install
+  - name: Restore Cache
+    steps:
+      - name: Restore Cache
+        run: restore-cache
+  - name: Build
+    steps:
+      - name: Build Application
+        run: build-engine
+  - name: Test
+    steps:
+      - name: Run Tests
+        run: npm test
+  - name: Security Scan
+    steps:
+      - name: Vulnerability Scan
+        run: npm audit
+  - name: Package
+    steps:
+      - name: Package Artifact
+        run: zip build
+  - name: Publish Artifact
+    steps:
+      - name: Publish Artifact
+        run: publish-artifact
+  - name: Deploy
+    steps:
+      - name: Deploy Application
+        run: deploy-engine
+  - name: Verify
+    steps:
+      - name: Verify Health
+        run: verify

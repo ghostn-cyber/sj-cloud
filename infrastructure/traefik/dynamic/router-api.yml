@@ -4,7 +4,7 @@ http:
     api-gateway:
       entryPoints:
         - websecure
-      rule: "Host(`api.test`)"
+      rule: "Host(`api.sj-cloud.test`) || Host(`api.test`)"
       service: platform-noop
       tls: {}
       middlewares:

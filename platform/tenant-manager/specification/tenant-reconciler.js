@@ -55,14 +55,14 @@ class TenantReconciler {
         }
 
         if (drift.type === 'missing_route') {
-          const primaryDomain = desired.primary_domain || `${tenantId}.platform.test`;
+          const primaryDomain = desired.primary_domain || `${tenantId}.sj-cloud.test`;
           const customDomains = desired.custom_domains || [];
           this.provisioner.dnsGenerator.generate(tenantId, primaryDomain, customDomains);
           repaired.push(drift.type);
         }
 
         if (drift.type === 'missing_certs') {
-          const primaryDomain = desired.primary_domain || `${tenantId}.platform.test`;
+          const primaryDomain = desired.primary_domain || `${tenantId}.sj-cloud.test`;
           this.provisioner.certificateGenerator.generate(tenantId, primaryDomain);
           repaired.push(drift.type);
         }

@@ -1,3 +1,5 @@
+const { AsyncLocalStorage } = require('async_hooks');
+
 const LogLevels = {
   DEBUG: 0,
   INFO: 1,
@@ -5,9 +7,30 @@ const LogLevels = {
   ERROR: 3
 };
 
-const CurrentLevel = process.env.LOG_LEVEL 
-  ? LogLevels[process.env.LOG_LEVEL.toUpperCase()] || LogLevels.INFO
-  : LogLevels.INFO;
+let PlatformConfig;
+try {
+  PlatformConfig = require('../config/config-context').PlatformConfig;
+} catch (e) {
+  try {
+    PlatformConfig = require('../../shared/config/config-context').PlatformConfig;
+  } catch (err) {}
+}
+
+function getPlatformValue(key, fallback) {
+  if (PlatformConfig) {
+    try {
+      return PlatformConfig[key] || fallback;
+    } catch (e) {}
+  }
+  return process.env[key] || fallback;
+}
+
+function getCurrentLogLevel() {
+  const levelStr = getPlatformValue('LOG_LEVEL', 'INFO');
+  return LogLevels[levelStr.toUpperCase()] || LogLevels.INFO;
+}
+
+const logStorage = new AsyncLocalStorage();
 
 class Logger {
   constructor(prefix = '') {
@@ -16,11 +39,24 @@ class Logger {
 
   log(levelName, message, meta = null) {
     const level = LogLevels[levelName];
-    if (level < CurrentLevel) return;
+    if (level < getCurrentLogLevel()) return;
+
+    const store = logStorage.getStore() || {};
 
     const logObj = {
       timestamp: new Date().toISOString(),
-      level: levelName,
+      severity: levelName,
+      service: getPlatformValue('SERVICE_ID', store.service || 'unknown'),
+      tenant: store.tenantId || store.tenant || null,
+      application: store.applicationId || store.application || null,
+      deployment_id: store.deploymentId || store.deployment_id || null,
+      pipeline_id: store.pipelineId || store.pipeline_id || null,
+      release_id: store.releaseId || store.release_id || null,
+      request_id: store.requestId || store.request_id || null,
+      trace_id: store.traceId || store.trace_id || null,
+      span_id: store.spanId || store.span_id || null,
+      container: getPlatformValue('CONTAINER_NAME', store.container || null),
+      host: getPlatformValue('HOSTNAME', store.host || 'localhost'),
       message: this.prefix ? `${this.prefix} ${message}` : message
     };
 
@@ -48,5 +84,6 @@ const globalLogger = new Logger('Mesh');
 
 module.exports = {
   Logger,
-  globalLogger
+  globalLogger,
+  logStorage
 };

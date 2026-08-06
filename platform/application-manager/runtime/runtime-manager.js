@@ -41,7 +41,8 @@ class RuntimeManager {
           environment: Object.entries(release.environment_snapshot).map(([k, v]) => `${k}=${v}`),
           labels: [
             "traefik.enable=true",
-            `traefik.http.routers.sj-app-${tenantId}-${appId}.rule=Host(\`${appId}.${tenantId}.platform.test\`)`,
+            `traefik.http.routers.sj-app-${tenantId}-${appId}.rule=HostRegexp(\`{app:${appId}}.{tenant:${tenantId}}.sj-cloud.test\`) || HostRegexp(\`{app:${appId}}.{tenant:${tenantId}}.platform.test\`)`,
+            `traefik.http.routers.sj-app-${tenantId}-${appId}.rulesyntax=v2`,
             `traefik.http.routers.sj-app-${tenantId}-${appId}.entrypoints=websecure`,
             `traefik.http.routers.sj-app-${tenantId}-${appId}.tls=true`,
             `traefik.http.services.sj-app-${tenantId}-${appId}.loadbalancer.server.port=${port}`
@@ -65,7 +66,8 @@ class RuntimeManager {
       http: {
         routers: {
           [`sj-app-${tenantId}-${appId}`]: {
-            rule: `Host(\`${appId}.${tenantId}.platform.test\`)`,
+            rule: `HostRegexp(\`{app:${appId}}.{tenant:${tenantId}}.sj-cloud.test\`) || HostRegexp(\`{app:${appId}}.{tenant:${tenantId}}.platform.test\`)`,
+            ruleSyntax: 'v2',
             service: `sj-app-${tenantId}-${appId}`,
             entryPoints: ['websecure'],
             tls: {}

@@ -1,0 +1,16 @@
+# Mesh Admin API Router Configuration
+http:
+  routers:
+    mesh:
+      entryPoints:
+        - websecure
+      rule: "Host(`mesh.sj-cloud.test`) || Host(`mesh.platform.test`)"
+      service: mesh-service
+      tls: {}
+      middlewares:
+        - security-headers
+  services:
+    mesh-service:
+      loadBalancer:
+        servers:
+          - url: "http://sj-mesh-proxy:9090"

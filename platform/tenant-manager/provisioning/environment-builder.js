@@ -40,7 +40,7 @@ class EnvironmentBuilder {
     merged.display_name = params.display_name || params.tenant_id;
     merged.status = params.status || 'CREATING';
     merged.plan = params.plan || 'standard';
-    merged.primary_domain = params.primary_domain || `${params.tenant_id}.platform.test`;
+    merged.primary_domain = params.primary_domain || `${params.tenant_id}.sj-cloud.test`;
     merged.custom_domains = params.custom_domains || [];
     merged.environment = params.environment || 'development';
     merged.region = params.region || 'local';

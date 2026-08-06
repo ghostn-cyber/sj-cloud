@@ -1,0 +1,20 @@
+groups:
+  - name: platform-alerts
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance {{ $labels.instance }} down"
+          description: "Service {{ $labels.job }} instance {{ $labels.instance }} is unreachable."
+
+      - alert: ContainerHighCpu
+        expr: container_cpu_usage_seconds_total > 0.8
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.container }}"
+          description: "Container {{ $labels.container }} CPU usage has exceeded 80% for 1 minute."

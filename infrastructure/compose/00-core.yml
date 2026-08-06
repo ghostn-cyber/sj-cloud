@@ -1,0 +1,119 @@
+services:
+  docker-socket-proxy:
+    build:
+      context: ../../services/docker-api-proxy
+    container_name: sj-docker-socket-proxy
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /run
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ../traefik:/etc/traefik
+    networks:
+      - sj-proxy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 128M
+          pids: 50
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "node", "src/health/healthcheck.js"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 2s
+
+  traefik:
+    image: traefik:v3.1
+    container_name: sj-traefik
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "65534:65534"
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /run
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    depends_on:
+      docker-socket-proxy:
+        condition: service_healthy
+    command:
+      - "--configfile=/etc/traefik/traefik.yml"
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - sj-edge
+      - sj-proxy
+    volumes:
+      - ../traefik:/etc/traefik
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+          pids: 100
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+networks:
+  sj-edge:
+    external: true
+  sj-proxy:
+    external: true
+  sj-control-plane:
+    external: true
+  sj-services:
+    external: true
+  sj-data:
+    external: true
+  sj-monitoring:
+    external: true
+  sj-observability:
+    external: true
+  sj-backup:
+    external: true
+  sj-build:
+    external: true
+  sj-ci:
+    external: true

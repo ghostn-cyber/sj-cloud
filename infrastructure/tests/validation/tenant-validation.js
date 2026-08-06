@@ -40,7 +40,7 @@ async function runTests() {
         display_name: 'Validation Test Tenant',
         slug: testTenantId,
         plan: 'premium',
-        primary_domain: `${testTenantId}.platform.test`,
+        primary_domain: `${testTenantId}.sj-cloud.test`,
         custom_domains: ['val.custom.com']
       });
 

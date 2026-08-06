@@ -1,0 +1,51 @@
+type: object
+required:
+  - repository_id
+  - tenant_id
+  - name
+  - provider
+  - url
+  - auth_type
+properties:
+  repository_id:
+    type: string
+    pattern: "^[a-z0-9-]+$"
+  tenant_id:
+    type: string
+    pattern: "^[a-z0-9-]+$"
+  name:
+    type: string
+  provider:
+    type: string
+    enum:
+      - github
+      - gitlab
+      - gitea
+      - bitbucket
+      - local
+  url:
+    type: string
+  auth_type:
+    type: string
+    enum:
+      - oauth
+      - token
+      - none
+  branches:
+    type: array
+    items:
+      type: string
+  active_branch:
+    type: string
+  sync_status:
+    type: string
+    enum:
+      - SYNCED
+      - OUT_OF_SYNC
+      - FAILED
+  webhook_secret:
+    type: string
+  created_at:
+    type: string
+  updated_at:
+    type: string

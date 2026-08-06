@@ -10,7 +10,20 @@ class DnsGenerator {
 
   generate(tenantId, primaryDomain, customDomains = []) {
     const domains = [primaryDomain, ...customDomains];
-    const hostRule = domains.map(d => `Host(\`${d}\`)`).join(' || ');
+    const hostRules = [];
+    let usesRegexp = false;
+
+    for (const d of domains) {
+      if (d.endsWith('.sj-cloud.test') || d.endsWith('.platform.test')) {
+        const subdomain = d.split('.')[0];
+        hostRules.push(`HostRegexp(\`{tenant:${subdomain}}.sj-cloud.test\`)`);
+        hostRules.push(`HostRegexp(\`{tenant:${subdomain}}.platform.test\`)`);
+        usesRegexp = true;
+      } else {
+        hostRules.push(`Host(\`${d}\`)`);
+      }
+    }
+    const hostRule = hostRules.join(' || ');
 
     const traefikConfig = {
       http: {
@@ -18,12 +31,14 @@ class DnsGenerator {
           [`tenant-${tenantId}`]: {
             entryPoints: ['web'],
             rule: hostRule,
-            service: `tenant-${tenantId}-service`
+            service: `tenant-${tenantId}-service`,
+            ...(usesRegexp ? { ruleSyntax: 'v2' } : {})
           },
           [`tenant-${tenantId}-secure`]: {
             entryPoints: ['websecure'],
             rule: hostRule,
             service: `tenant-${tenantId}-service`,
+            ...(usesRegexp ? { ruleSyntax: 'v2' } : {}),
             tls: {
               domains: [
                 {

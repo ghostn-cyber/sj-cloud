@@ -1,0 +1,12 @@
+# Prometheus Metrics Router Configuration
+http:
+  routers:
+    metrics:
+      entryPoints:
+        - websecure
+      rule: "Host(`metrics.sj-cloud.test`) || Host(`metrics.platform.test`)"
+      service: prometheus@internal
+      tls: {}
+      middlewares:
+        - dashboard-auth
+        - security-headers

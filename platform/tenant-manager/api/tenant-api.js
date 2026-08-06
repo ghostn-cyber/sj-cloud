@@ -22,6 +22,11 @@ const { TenantReconciler } = require('../specification/tenant-reconciler');
 const { SecretRotation, rotationMetrics } = require('../security/secret-rotation');
 const { CertificateManager, certificateMetrics } = require('../security/certificate-manager');
 const { handleApplicationRoute } = require('../../application-manager/api/application-api');
+const { handleCICDRoute } = require('./cicd-api');
+const { handleOperationsRoute } = require('./operations-api');
+const { handleInfrastructureRoute } = require('./infrastructure-api');
+const { handleConfigRoute } = require('./config-api');
+
 
 const PORT = process.env.PORT || 8083;
 const PROJECT_ROOT = path.resolve(__dirname, '../../../');
@@ -124,6 +129,60 @@ function generatePrometheusMetrics(tenantId = null) {
   body += `# TYPE sj_application_rollback_total counter\n`;
   body += `sj_application_rollback_total ${appMetrics.rollback_total || 0}\n`;
 
+  // Pipeline metrics integration
+  const { PipelineFSM } = require('../../pipeline-engine/pipeline-fsm');
+  const pipeMetrics = PipelineFSM.getMetrics();
+  body += `# HELP sj_pipeline_runs_total Total pipeline executions\n`;
+  body += `# TYPE sj_pipeline_runs_total counter\n`;
+  body += `sj_pipeline_runs_total ${pipeMetrics.pipeline_runs_total || 0}\n`;
+
+  body += `# HELP sj_pipeline_runs_success Total successful pipeline executions\n`;
+  body += `# TYPE sj_pipeline_runs_success counter\n`;
+  body += `sj_pipeline_runs_success ${pipeMetrics.pipeline_runs_success || 0}\n`;
+
+  body += `# HELP sj_pipeline_runs_failed Total failed pipeline executions\n`;
+  body += `# TYPE sj_pipeline_runs_failed counter\n`;
+  body += `sj_pipeline_runs_failed ${pipeMetrics.pipeline_runs_failed || 0}\n`;
+
+  body += `# HELP sj_pipeline_runs_cancelled Total cancelled pipeline executions\n`;
+  body += `# TYPE sj_pipeline_runs_cancelled counter\n`;
+  body += `sj_pipeline_runs_cancelled ${pipeMetrics.pipeline_runs_cancelled || 0}\n`;
+
+  // Platform Health Metrics
+  try {
+    const { globalPlatformHealthEngine } = require('../../health-score/platform-health-engine');
+    const health = globalPlatformHealthEngine.getDetailedHealth();
+    body += `# HELP sj_platform_health_score Overall platform health score\n`;
+    body += `# TYPE sj_platform_health_score gauge\n`;
+    body += `sj_platform_health_score ${health.score}\n`;
+  } catch (e) {
+    // ignore
+  }
+
+  // Platform Configuration Metrics
+  try {
+    const configManager = require('../../shared/config/config-manager');
+    const metrics = configManager.getMetrics();
+    
+    body += `# HELP sj_platform_config_reload_total Total configuration reloads\n`;
+    body += `# TYPE sj_platform_config_reload_total counter\n`;
+    body += `sj_platform_config_reload_total ${metrics.sj_platform_config_reload_total}\n`;
+
+    body += `# HELP sj_platform_config_errors_total Total configuration validation errors\n`;
+    body += `# TYPE sj_platform_config_errors_total counter\n`;
+    body += `sj_platform_config_errors_total ${metrics.sj_platform_config_errors_total}\n`;
+
+    body += `# HELP sj_platform_config_info Active environment info metadata\n`;
+    body += `# TYPE sj_platform_config_info gauge\n`;
+    body += `sj_platform_config_info{environment="${metrics.sj_platform_environment}",domain="${metrics.sj_platform_domain}",region="${metrics.sj_platform_region}"} 1\n`;
+
+    body += `# HELP sj_platform_configuration_version Current configuration reload version\n`;
+    body += `# TYPE sj_platform_configuration_version gauge\n`;
+    body += `sj_platform_configuration_version ${metrics.sj_platform_configuration_version}\n`;
+  } catch (e) {
+    // ignore
+  }
+
   return body;
 }
 
@@ -140,6 +199,46 @@ const server = http.createServer(async (req, res) => {
       }
     } catch (routeErr) {
       res.statusCode = routeErr.statusCode || 500;
+      return res.end(JSON.stringify({ error: routeErr.message }));
+    }
+
+    // CI/CD Route routing delegation
+    try {
+      if (await handleCICDRoute(req, res)) {
+        return;
+      }
+    } catch (routeErr) {
+      res.statusCode = 500;
+      return res.end(JSON.stringify({ error: routeErr.message }));
+    }
+
+    // Operations & SRE Route routing delegation
+    try {
+      if (await handleOperationsRoute(req, res)) {
+        return;
+      }
+    } catch (routeErr) {
+      res.statusCode = 500;
+      return res.end(JSON.stringify({ error: routeErr.message }));
+    }
+
+    // Infrastructure Dashboard Route routing delegation
+    try {
+      if (await handleInfrastructureRoute(req, res)) {
+        return;
+      }
+    } catch (routeErr) {
+      res.statusCode = 500;
+      return res.end(JSON.stringify({ error: routeErr.message }));
+    }
+
+    // Platform Configuration Route routing delegation
+    try {
+      if (await handleConfigRoute(req, res)) {
+        return;
+      }
+    } catch (routeErr) {
+      res.statusCode = 500;
       return res.end(JSON.stringify({ error: routeErr.message }));
     }
 
@@ -292,7 +391,7 @@ const server = http.createServer(async (req, res) => {
       globalPolicyEngine.evaluate('provision', params.tenant_id, params);
 
       // Create initial creating config in registry
-      const primaryDomain = params.primary_domain || `${params.tenant_id}.platform.test`;
+      const primaryDomain = params.primary_domain || `${params.tenant_id}.sj-cloud.test`;
       const initialConfig = {
         tenant_id: params.tenant_id,
         slug: params.slug || params.tenant_id,

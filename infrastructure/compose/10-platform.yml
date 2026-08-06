@@ -1,0 +1,64 @@
+services:
+  registry-api:
+    build:
+      context: ../..
+      dockerfile: platform/service-mesh/proxy/Dockerfile
+    container_name: sj-registry-api
+    command: node registry/cli/registry-api
+    restart: unless-stopped
+    init: true
+    read_only: true
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /run
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - ../../config:/app/config
+      - ../../history:/app/history
+    environment:
+      - PORT=8080
+      - NODE_ENV=development
+    networks:
+      - sj-proxy
+      - sj-control-plane
+      - sj-monitoring
+    deploy:
+      resources:
+        limits:
+          cpus: '0.4'
+          memory: 256M
+          pids: 50
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/services"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 2s
+    labels:
+      platform: "sj-cloud"
+      layer: "control-plane"
+      service: "registry-api"
+
+networks:
+  sj-proxy:
+    external: true
+  sj-control-plane:
+    external: true
+  sj-monitoring:
+    external: true

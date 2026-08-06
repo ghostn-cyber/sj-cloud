@@ -4,9 +4,25 @@ http:
     platform-portal:
       entryPoints:
         - websecure
-      rule: "Host(`platform.test`) || Host(`startupjigawa.test`)"
+      rule: "Host(`sj-cloud.test`) || Host(`platform.test`) || Host(`startupjigawa.test`)"
       service: platform-noop
       tls: {}
       middlewares:
         - security-headers
         - compression
+
+    platform-dashboard:
+      entryPoints:
+        - websecure
+      rule: "Host(`dashboard.sj-cloud.test`) || Host(`dashboard.platform.test`)"
+      service: dashboard-service
+      tls: {}
+      middlewares:
+        - security-headers
+        - compression
+
+  services:
+    dashboard-service:
+      loadBalancer:
+        servers:
+          - url: "http://sj-tenant-manager:80"

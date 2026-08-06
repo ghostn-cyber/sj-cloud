@@ -1,0 +1,11 @@
+{
+  "name": "@sj-cloud/dashboard",
+  "version": "1.0.0",
+  "description": "SJ Cloud Control Plane Dashboard Web Application",
+  "main": "server.js",
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "jsonschema": "^1.4.1"
+  },
+  "private": true
+}

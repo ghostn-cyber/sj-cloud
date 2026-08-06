@@ -42,19 +42,19 @@ measure_latency() {
 
 # 1. Latency benchmarks
 echo "Benchmarking /ping health latency..."
-PING_LATENCY=$(measure_latency "http://127.0.0.1/ping" "platform.test" "" "platform.test:80:127.0.0.1")
+PING_LATENCY=$(measure_latency "http://127.0.0.1/ping" "sj-cloud.test" "" "sj-cloud.test:80:127.0.0.1")
 echo "  - Ping latency: ${PING_LATENCY} ms"
 
 echo "Benchmarking /metrics telemetry latency..."
-METRICS_LATENCY=$(measure_latency "http://127.0.0.1/metrics" "platform.test" "" "platform.test:80:127.0.0.1")
+METRICS_LATENCY=$(measure_latency "http://127.0.0.1/metrics" "sj-cloud.test" "" "sj-cloud.test:80:127.0.0.1")
 echo "  - Metrics latency: ${METRICS_LATENCY} ms"
 
 echo "Benchmarking /dashboard/ latency..."
-DASHBOARD_LATENCY=$(measure_latency "https://dashboard.platform.test/dashboard/" "dashboard.platform.test" "admin:sjcloudadmin" "dashboard.platform.test:443:127.0.0.1")
+DASHBOARD_LATENCY=$(measure_latency "https://traefik.sj-cloud.test/dashboard/" "traefik.sj-cloud.test" "admin:sjcloudadmin" "traefik.sj-cloud.test:443:127.0.0.1")
 echo "  - Dashboard latency: ${DASHBOARD_LATENCY} ms"
 
 echo "Benchmarking routing latency (HTTPS redirect & path dispatch)..."
-ROUTING_LATENCY=$(measure_latency "https://api.test/api/rawdata" "api.test" "admin:sjcloudadmin" "api.test:443:127.0.0.1")
+ROUTING_LATENCY=$(measure_latency "https://api.sj-cloud.test/api/rawdata" "api.sj-cloud.test" "admin:sjcloudadmin" "api.sj-cloud.test:443:127.0.0.1")
 echo "  - Routing latency: ${ROUTING_LATENCY} ms"
 
 # 2. Startup duration benchmark

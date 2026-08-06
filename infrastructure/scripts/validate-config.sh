@@ -105,7 +105,7 @@ else:
 
 # 7. Validate Docker Compose config file
 echo "Validating docker-compose schema..."
-(cd "${INFRA_DIR}" && docker compose --env-file .env -f compose/10-traefik.yml config >/dev/null)
+(cd "${INFRA_DIR}" && docker compose --env-file .env -f compose/00-core.yml config >/dev/null)
 echo "✅ Docker Compose schema is valid."
 
 echo "=========================================="

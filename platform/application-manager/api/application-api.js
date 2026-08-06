@@ -81,6 +81,11 @@ async function handleApplicationRoute(req, res) {
 
     // POST /applications/{id}/build
     if (action === 'build' && req.method === 'POST') {
+      if (req.headers['x-pipeline-execution'] !== 'true') {
+        res.statusCode = 403;
+        res.end(JSON.stringify({ error: 'GovernanceError', message: 'Direct invocation of Build Engine is prohibited. Builds must originate from a Pipeline.' }));
+        return true;
+      }
       const bodyStr = await readBody(req);
       const opts = bodyStr ? JSON.parse(bodyStr) : {};
       const result = await globalBuildEngine.runBuild(appId, app.tenant_id, opts);
@@ -91,6 +96,11 @@ async function handleApplicationRoute(req, res) {
 
     // POST /applications/{id}/deploy
     if (action === 'deploy' && req.method === 'POST') {
+      if (req.headers['x-pipeline-execution'] !== 'true') {
+        res.statusCode = 403;
+        res.end(JSON.stringify({ error: 'GovernanceError', message: 'Direct invocation of Deployment Engine is prohibited. Deployments must originate from a Pipeline.' }));
+        return true;
+      }
       const bodyStr = await readBody(req);
       const { releaseId } = JSON.parse(bodyStr);
       const result = await globalDeploymentEngine.runDeployment(appId, app.tenant_id, releaseId);

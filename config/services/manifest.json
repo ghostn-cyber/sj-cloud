@@ -2,10 +2,10 @@
   "platformName": "SJ Cloud",
   "platformVersion": "1.0.0",
   "runtimeVersion": "1.0.0",
-  "buildNumber": 4,
+  "buildNumber": 5,
   "snapshotVersion": "1.0.0",
-  "snapshotChecksum": "9852ddf0f2886a8a607cd76aad0d81a3adf3bd42d2867178e3b3716d1cea8c90",
-  "compileTimestamp": "2026-08-01T10:03:06.509Z",
+  "snapshotChecksum": "2b73605f81f1b59026493e1fbe6b5bb39c4a890f4f036d1ff60baa25bbca08ae",
+  "compileTimestamp": "2026-08-06T23:25:47.341Z",
   "runtimeState": "READY",
   "enabledFeatures": [
     "service-mesh",

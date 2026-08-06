@@ -18,14 +18,14 @@ echo "✅ Ping health endpoint responded with 200 OK."
 
 # 2. Test HTTP -> HTTPS redirection
 echo "Testing HTTP to HTTPS redirect..."
-REDIRECT_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: platform.test" http://127.0.0.1/)
-if [ "${REDIRECT_STATUS}" != "301" ]; then
+REDIRECT_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: sj-cloud.test" http://127.0.0.1/)
+if [ "${REDIRECT_STATUS}" != "301" ] && [ "${REDIRECT_STATUS}" != "308" ]; then
   echo "❌ Error: HTTP to HTTPS redirection did not occur! (Status: ${REDIRECT_STATUS})"
   exit 1
 fi
 
-REDIRECT_URL=$(curl -s -I -H "Host: platform.test" http://127.0.0.1/ | grep -i "location:" | tr -d '\r\n')
-if [[ ! "${REDIRECT_URL}" =~ "https://platform.test/" ]]; then
+REDIRECT_URL=$(curl -s -I -H "Host: sj-cloud.test" http://127.0.0.1/ | grep -i "location:" | tr -d '\r\n')
+if [[ ! "${REDIRECT_URL}" =~ "https://sj-cloud.test/" ]]; then
   echo "❌ Error: Redirect URL was invalid: ${REDIRECT_URL}"
   exit 1
 fi

@@ -8,8 +8,13 @@ exec_curl() {
   docker exec sj-billing curl -s "$1"
 }
 
+# Helper function to run curl on the host targeting Registry API via Traefik
+exec_registry_curl() {
+  curl -k -s --resolve registry.sj-cloud.test:443:127.0.0.1 "https://registry.sj-cloud.test$1"
+}
+
 # 1. Verify Registry API health endpoint
-HEALTH_RESP=$(exec_curl "http://registry-api:8080/health")
+HEALTH_RESP=$(exec_registry_curl "/health")
 echo "Registry API Health: ${HEALTH_RESP}"
 if [[ "${HEALTH_RESP}" != *"UP"* ]]; then
   echo "❌ Error: Registry API health check failed."
@@ -17,7 +22,7 @@ if [[ "${HEALTH_RESP}" != *"UP"* ]]; then
 fi
 
 # 2. Verify Registry API services endpoint returns 10 services
-SERVICES_LIST=$(exec_curl "http://registry-api:8080/services")
+SERVICES_LIST=$(exec_registry_curl "/services")
 SERVICES_COUNT=$(echo "${SERVICES_LIST}" | grep -c '"id":' || true)
 echo "Registered services count: ${SERVICES_COUNT}"
 if [ "${SERVICES_COUNT}" -ne 10 ]; then
@@ -29,7 +34,7 @@ fi
 echo "Testing health state transitions..."
 
 # Initial check: auth should be healthy
-AUTH_STATUS=$(exec_curl "http://registry-api:8080/services/auth" | grep '"status":' | awk -F'"' '{print $4}' || true)
+AUTH_STATUS=$(exec_registry_curl "/services/auth" | grep '"status":' | awk -F'"' '{print $4}' || true)
 echo "Initial Auth status: ${AUTH_STATUS}"
 
 # Trigger auth mock service to report UNREADY
@@ -40,8 +45,8 @@ exec_curl "http://sj-auth:80/trigger/ready?enable=false" > /dev/null
 echo "Waiting 6 seconds for health monitor sweep..."
 sleep 6
 
-# Verify status transitioned to 'Starting'
-NEW_STATUS=$(exec_curl "http://registry-api:8080/services/auth" | grep '"status":' | awk -F'"' '{print $4}' || true)
+# Verify status transitioned to 'Starting' or 'Unhealthy'
+NEW_STATUS=$(exec_registry_curl "/services/auth" | grep '"status":' | awk -F'"' '{print $4}' || true)
 echo "Updated Auth status: ${NEW_STATUS}"
 
 # Reset Auth readiness probe

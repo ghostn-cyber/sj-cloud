@@ -3,7 +3,7 @@ const { globalTenantRegistry } = require('../registry/tenant-registry');
 class RoutingPolicy {
   evaluate(action, tenantId, params = {}) {
     if (action === 'provision' || action === 'update-domains') {
-      const primaryDomain = params.primary_domain || `${tenantId}.platform.test`;
+      const primaryDomain = params.primary_domain || `${tenantId}.sj-cloud.test`;
       const customDomains = params.custom_domains || [];
 
       const domainRegex = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,6}$/;

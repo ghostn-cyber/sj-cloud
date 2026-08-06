@@ -518,18 +518,77 @@ Eliminates the network hop to a centralized Registry API in the live request pat
 
 ---
 
+## ARCH-019 — Service Mesh Runtime Governance
+
+### Decision
+
+Introduce Compiled JSON snapshots, hierarchical policy resolution (Default -> Service -> Tenant -> Environment), and pluggable capability discovery for runtime engines.
+
+### Rationale
+
+Ensures configuration integrity, quick rollbacks, and decouples the live request path from external configuration APIs.
+
+---
+
+## ARCH-020 — Service Mesh Runtime Hardening
+
+### Decision
+
+Implement typed error hierarchy subclassing `PlatformError`, assign SPIFFE IDs format: `spiffe://sjcloud.io/ns/<namespace>/sa/<service-id>`, and wrap lifecycles inside a 9-State Finite State Machine (FSM).
+
+### Rationale
+
+Guarantees operational stability, fail-fast configuration loaders, and standard system telemetry.
+
+---
+
+## ARCH-021 — Application Runtime & Deployment Engine
+
+### Decision
+
+Provide an Application Registry scoped per tenant, Build Engine supporting multiple OCI builders, immutable releases with variables/secrets snapshots, 6-State FSM deployment orchestrator, and autoscaling supervision watchdog.
+
+### Rationale
+
+Transforms SJ Cloud into a fully functional PaaS runtime.
+
+---
+
+## ARCH-022 — Developer Platform & CI/CD Engine
+
+### Decision
+
+Establish CI/CD Control Plane with Repository Manager (AES-256-GCM encrypted credentials), Webhook Receiver (HMAC-SHA256 signature validation), 11-stage Pipeline Engine, Artifact Registry, Secrets Manager, and Environment Promotion Engine.
+
+### Rationale
+
+Guarantees that all deployments originate exclusively from auditable pipelines, enforcing runtime governance and security.
+
+---
+
+## ARCH-023 — Platform Operations, Observability & SRE Foundation
+
+### Decision
+
+Implement a comprehensive SRE and operations foundation featuring centralized Prometheus metrics, structured JSON logging, distributed W3C tracing, FSM-governed alert and incident management, capacity forecasting, backup validation, diagnostics audit, and runtime event loop / latency profiling.
+
+### Rationale
+
+Empowers platform operators with end-to-end visibility, automated health scoring, and robust diagnostic tools required for running mission-critical tenant workloads.
+
+---
+
 # Pending Architecture Decisions
 
 These decisions remain under evaluation.
 
 | ID | Decision | Planned Phase |
 |-----|----------|--------------|
-| ARCH-019 | Message Broker (RabbitMQ/Kafka/NATS) | Phase 5 |
-| ARCH-020 | Kubernetes Deployment Strategy | Phase 6 |
-| ARCH-021 | Multi-Region Disaster Recovery | Phase 6 |
-| ARCH-022 | Identity Provider (Keycloak/OAuth2) | Phase 5 |
-| ARCH-023 | Service Mesh Evaluation | Phase 6 |
-| ARCH-024 | Secret Management (Vault/SOPS) | Phase 5 |
+| ARCH-024 | Kubernetes Deployment Strategy | Phase 6 |
+| ARCH-025 | Multi-Region Disaster Recovery | Phase 6 |
+| ARCH-026 | Identity Provider (Keycloak/OAuth2) | Phase 5 |
+| ARCH-027 | Secret Management (Vault/SOPS) | Phase 5 |
+
 
 ---
 
@@ -599,4 +658,4 @@ Changes to any approved architecture decision must be accompanied by:
 
 **Status:** Approved
 
-This document serves as the authoritative index of architectural decisions for the SJ Cloud platform and should be considered the starting point for understanding why the platform is designed the way it is.ss
+This document serves as the authoritative index of architectural decisions for the SJ Cloud platform and should be considered the starting point for understanding why the platform is designed the way it is.

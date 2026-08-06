@@ -8,7 +8,8 @@ class HealthVerifier {
 
       const attempt = () => {
         attempts++;
-        const checkPort = process.env.TRAEFIK_HTTP_PORT || 80;
+        const { NetworkConfig } = require('../../shared/config/config-context');
+        const checkPort = NetworkConfig.HTTP_PORT || 80;
         const options = {
           hostname: '127.0.0.1',
           port: checkPort,

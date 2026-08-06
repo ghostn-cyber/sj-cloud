@@ -6,7 +6,7 @@ class RuntimeContext {
     // 1. Tenant Context
     this.tenant = {
       tenantId: params.tenantId || 'system',
-      domain: params.domain || 'platform.test',
+      domain: params.domain || 'sj-cloud.test',
       metadata: params.tenantMetadata || {}
     };
 

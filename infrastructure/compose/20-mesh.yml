@@ -1,29 +1,4 @@
-version: '3.8'
-
 services:
-  # Control Plane Registry API
-  registry-api:
-    build:
-      context: ../..
-      dockerfile: platform/service-mesh/proxy/Dockerfile
-    container_name: sj-registry-api
-    command: node registry/cli/registry-api
-    restart: unless-stopped
-    volumes:
-      - ../../config:/app/config
-    environment:
-      - PORT=8080
-      - NODE_ENV=development
-    networks:
-      - sj-proxy
-      - sj-services
-      - sj-monitoring
-    labels:
-      platform: "sj-cloud"
-      layer: "control-plane"
-      service: "registry-api"
-
-  # Runtime Mesh Proxy (DNS interceptor)
   mesh-proxy:
     build:
       context: ../..
@@ -31,16 +6,31 @@ services:
     container_name: sj-mesh-proxy
     command: node proxy/server.js
     restart: unless-stopped
+    init: true
+    read_only: true
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /run
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     volumes:
       - ../../config:/app/config
     ports:
-      - "9090:9090" # Admin / Prometheus scraping interface
+      - "9090:9090"
     environment:
       - PORT=80
       - ADMIN_PORT=9090
       - NODE_ENV=development
     depends_on:
-      - registry-api
+      registry-api:
+        condition: service_healthy
     networks:
       sj-services:
         aliases:
@@ -55,116 +45,37 @@ services:
           - tenant-manager
           - billing
       sj-proxy:
+      sj-control-plane:
       sj-monitoring:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+          pids: 100
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/admin/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 2s
     labels:
       platform: "sj-cloud"
       layer: "runtime-plane"
       service: "mesh-proxy"
 
-  # Mock Platform Services (for testing & verification)
-  mock-auth:
-    build:
-      context: ../../platform/testing/mock-service
-    container_name: sj-auth
-    environment:
-      - SERVICE_ID=auth
-      - PORT=80
-    networks:
-      - sj-services
-
-  mock-storage:
-    build:
-      context: ../../platform/testing/mock-service
-    container_name: sj-storage
-    environment:
-      - SERVICE_ID=storage
-      - PORT=80
-    networks:
-      - sj-services
-
-  mock-notification:
-    build:
-      context: ../../platform/testing/mock-service
-    container_name: sj-notification
-    environment:
-      - SERVICE_ID=notification
-      - PORT=80
-    networks:
-      - sj-services
-
-  mock-analytics:
-    build:
-      context: ../../platform/testing/mock-service
-    container_name: sj-analytics
-    environment:
-      - SERVICE_ID=analytics
-      - PORT=80
-    networks:
-      - sj-services
-
-  mock-audit:
-    build:
-      context: ../../platform/testing/mock-service
-    container_name: sj-audit
-    environment:
-      - SERVICE_ID=audit
-      - PORT=80
-    networks:
-      - sj-services
-
-  mock-search:
-    build:
-      context: ../../platform/testing/mock-service
-    container_name: sj-search
-    environment:
-      - SERVICE_ID=search
-      - PORT=80
-    networks:
-      - sj-services
-
-  mock-queue:
-    build:
-      context: ../../platform/testing/mock-service
-    container_name: sj-queue
-    environment:
-      - SERVICE_ID=queue
-      - PORT=80
-    networks:
-      - sj-services
-
-  mock-api-gateway:
-    build:
-      context: ../../platform/testing/mock-service
-    container_name: sj-api-gateway
-    environment:
-      - SERVICE_ID=api-gateway
-      - PORT=80
-    networks:
-      - sj-services
-      - sj-proxy
-
-  mock-tenant-manager:
-    build:
-      context: ../../platform/testing/mock-service
-    container_name: sj-tenant-manager
-    environment:
-      - SERVICE_ID=tenant-manager
-      - PORT=80
-    networks:
-      - sj-services
-
-  mock-billing:
-    build:
-      context: ../../platform/testing/mock-service
-    container_name: sj-billing
-    environment:
-      - SERVICE_ID=billing
-      - PORT=80
-    networks:
-      - sj-services
-
 networks:
   sj-proxy:
+    external: true
+  sj-control-plane:
     external: true
   sj-services:
     external: true

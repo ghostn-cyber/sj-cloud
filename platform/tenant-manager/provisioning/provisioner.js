@@ -19,6 +19,7 @@ const { TransactionContext } = require('../transactions/transaction-context');
 const { TransactionRunner } = require('../transactions/transaction-runner');
 const {
   WorkspaceStep,
+  VolumeStep,
   SecretStep,
   DatabaseStep,
   EnvironmentStep,
@@ -57,6 +58,7 @@ class Provisioner {
       const context = new TransactionContext(tenantId, params);
       const transaction = new Transaction()
         .addStep(new WorkspaceStep(this.workspaceCreator))
+        .addStep(new VolumeStep(this.volumeCreator))
         .addStep(new SecretStep(this.secretGenerator))
         .addStep(new DatabaseStep())
         .addStep(new EnvironmentStep(this.environmentBuilder))
@@ -88,9 +90,10 @@ class Provisioner {
 
   async provisionDatabase(dbName, dbUser, dbPassword, rollbackManager) {
     try {
-      const host = process.env.PGHOST || 'localhost';
-      const adminUser = process.env.PGUSER || 'postgres';
-      const adminPass = process.env.PGPASSWORD || 'postgres';
+      const { DatabaseConfig, SecurityConfig } = require('../../shared/config/config-context');
+      const host = DatabaseConfig.POSTGRES_HOST || 'localhost';
+      const adminUser = 'postgres';
+      const adminPass = SecurityConfig.POSTGRES_PASSWORD || 'postgres';
 
       try {
         execSync('which psql', { stdio: 'ignore' });

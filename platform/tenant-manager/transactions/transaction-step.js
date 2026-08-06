@@ -32,6 +32,21 @@ class WorkspaceStep extends TransactionStep {
   }
 }
 
+class VolumeStep extends TransactionStep {
+  constructor(volumeCreator) {
+    super('Volume Creation');
+    this.volumeCreator = volumeCreator;
+  }
+
+  async execute(context) {
+    this.volumeCreator.create(context.tenantId);
+  }
+
+  async compensate(context) {
+    // Cleaned up when WorkspaceStep rolls back WorkspaceCreator.destroy()
+  }
+}
+
 class SecretStep extends TransactionStep {
   constructor(secretGenerator) {
     super('Secret Generation');
@@ -68,9 +83,10 @@ class DatabaseStep extends TransactionStep {
       return;
     }
 
-    const host = process.env.PGHOST || 'localhost';
-    const adminUser = process.env.PGUSER || 'postgres';
-    const adminPass = process.env.PGPASSWORD || 'postgres';
+    const { DatabaseConfig, SecurityConfig } = require('../../shared/config/config-context');
+    const host = DatabaseConfig.POSTGRES_HOST || 'localhost';
+    const adminUser = 'postgres';
+    const adminPass = SecurityConfig.POSTGRES_PASSWORD || 'postgres';
 
     const createRoleCmd = `PGPASSWORD="${adminPass}" psql -h ${host} -U ${adminUser} -d postgres -c "CREATE ROLE ${dbUser} WITH LOGIN PASSWORD '${dbPassword}';"`;
     const createDbCmd = `PGPASSWORD="${adminPass}" psql -h ${host} -U ${adminUser} -d postgres -c "CREATE DATABASE ${dbName} OWNER ${dbUser};"`;
@@ -89,9 +105,10 @@ class DatabaseStep extends TransactionStep {
       return;
     }
 
-    const host = process.env.PGHOST || 'localhost';
-    const adminUser = process.env.PGUSER || 'postgres';
-    const adminPass = process.env.PGPASSWORD || 'postgres';
+    const { DatabaseConfig, SecurityConfig } = require('../../shared/config/config-context');
+    const host = DatabaseConfig.POSTGRES_HOST || 'localhost';
+    const adminUser = 'postgres';
+    const adminPass = SecurityConfig.POSTGRES_PASSWORD || 'postgres';
 
     try {
       const dropDbCmd = `PGPASSWORD="${adminPass}" psql -h ${host} -U ${adminUser} -d postgres -c "DROP DATABASE IF EXISTS ${context.dbName};"`;
@@ -122,12 +139,12 @@ class EnvironmentStep extends TransactionStep {
       display_name: params.display_name || tenantId,
       status: 'PROVISIONING',
       plan: params.plan || 'standard',
-      primary_domain: params.primary_domain || `${tenantId}.platform.test`,
+      primary_domain: params.primary_domain || `${tenantId}.sj-cloud.test`,
       custom_domains: params.custom_domains || [],
       environment: params.environment || 'development',
       region: params.region || 'local',
-      database_host: process.env.DATABASE_HOST || 'localhost',
-      database_port: process.env.DATABASE_PORT || '5432',
+      database_host: require('../../shared/config/config-context').DatabaseConfig.POSTGRES_HOST || 'localhost',
+      database_port: require('../../shared/config/config-context').DatabaseConfig.POSTGRES_PORT || '5432',
       database_name: dbName,
       database_username: dbUser,
       database_password: context.secrets.db_password,
@@ -183,7 +200,7 @@ class DnsStep extends TransactionStep {
   }
 
   async execute(context) {
-    const primaryDomain = context.params.primary_domain || `${context.tenantId}.platform.test`;
+    const primaryDomain = context.params.primary_domain || `${context.tenantId}.sj-cloud.test`;
     const customDomains = context.params.custom_domains || [];
     this.dnsGenerator.generate(context.tenantId, primaryDomain, customDomains);
   }
@@ -200,7 +217,7 @@ class CertificateStep extends TransactionStep {
   }
 
   async execute(context) {
-    const primaryDomain = context.params.primary_domain || `${context.tenantId}.platform.test`;
+    const primaryDomain = context.params.primary_domain || `${context.tenantId}.sj-cloud.test`;
     this.certificateGenerator.generate(context.tenantId, primaryDomain);
   }
 
@@ -231,7 +248,7 @@ class HealthStep extends TransactionStep {
   }
 
   async execute(context) {
-    const primaryDomain = context.params.primary_domain || `${context.tenantId}.platform.test`;
+    const primaryDomain = context.params.primary_domain || `${context.tenantId}.sj-cloud.test`;
     try {
       await this.healthVerifier.verify(primaryDomain, 3, 200);
     } catch (err) {
@@ -247,6 +264,7 @@ class HealthStep extends TransactionStep {
 module.exports = {
   TransactionStep,
   WorkspaceStep,
+  VolumeStep,
   SecretStep,
   DatabaseStep,
   EnvironmentStep,

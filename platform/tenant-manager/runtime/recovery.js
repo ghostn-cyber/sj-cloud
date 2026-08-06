@@ -47,7 +47,7 @@ class Recovery {
       }
 
       if (reason === 'routing_file_missing') {
-        const primaryDomain = tenant.primary_domain || `${tenantId}.platform.test`;
+        const primaryDomain = tenant.primary_domain || `${tenantId}.sj-cloud.test`;
         const customDomains = tenant.custom_domains || [];
         this.provisioner.dnsGenerator.generate(tenantId, primaryDomain, customDomains);
         TenantEvents.emit('TENANT_RECOVERED', tenantId, { action: 'recreate_route' });
@@ -55,7 +55,7 @@ class Recovery {
       }
 
       if (reason === 'certificate_unhealthy') {
-        const primaryDomain = tenant.primary_domain || `${tenantId}.platform.test`;
+        const primaryDomain = tenant.primary_domain || `${tenantId}.sj-cloud.test`;
         this.provisioner.certificateGenerator.generate(tenantId, primaryDomain);
         TenantEvents.emit('TENANT_RECOVERED', tenantId, { action: 'reissue_certificate' });
         return true;
@@ -66,9 +66,10 @@ class Recovery {
         const dbName = `sj_tenant_${tenantId.replace(/-/g, '_')}`;
         const dbUser = `sj_user_${tenantId.replace(/-/g, '_')}`;
         
-        const host = process.env.PGHOST || 'localhost';
-        const adminUser = process.env.PGUSER || 'postgres';
-        const adminPass = process.env.PGPASSWORD || 'postgres';
+        const { DatabaseConfig, SecurityConfig } = require('../../shared/config/config-context');
+        const host = DatabaseConfig.POSTGRES_HOST || 'localhost';
+        const adminUser = 'postgres';
+        const adminPass = SecurityConfig.POSTGRES_PASSWORD || 'postgres';
 
         const createRoleCmd = `PGPASSWORD="${adminPass}" psql -h ${host} -U ${adminUser} -d postgres -c "CREATE ROLE ${dbUser} WITH LOGIN PASSWORD '${secrets.db_password}';"`;
         const createDbCmd = `PGPASSWORD="${adminPass}" psql -h ${host} -U ${adminUser} -d postgres -c "CREATE DATABASE ${dbName} OWNER ${dbUser};"`;

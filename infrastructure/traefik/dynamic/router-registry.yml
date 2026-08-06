@@ -1,0 +1,16 @@
+# Registry API Router Configuration
+http:
+  routers:
+    registry:
+      entryPoints:
+        - websecure
+      rule: "Host(`registry.sj-cloud.test`) || Host(`registry.platform.test`)"
+      service: registry-service
+      tls: {}
+      middlewares:
+        - security-headers
+  services:
+    registry-service:
+      loadBalancer:
+        servers:
+          - url: "http://sj-registry-api:8080"

@@ -1,35 +1,45 @@
 # Makefile for SJ Cloud Platform Ingress Layer & Service Mesh Foundation
 export NODE_PATH=platform/service-mesh/node_modules
 
-.PHONY: init network deploy validate lint test benchmark restart logs status destroy all \
-        registry discovery health routing retry validate-services service-status service-test mesh mesh-test \
+.PHONY: init network deploy validate lint test performance-benchmark restart logs status destroy all \
+        registry discovery discovery-health routing retry validate-services service-status service-test mesh mesh-test \
         validate-runtime tenant tenant-test tenant-validate tenant-create tenant-delete tenant-status tenant-list tenant-logs tenant-metrics tenant-rollback \
-        reconcile tenant-audit tenant-queue
+        reconcile tenant-audit tenant-queue operations-test operations-validate
+
 
 INFRA_DIR=infrastructure
 SCRIPTS_DIR=$(INFRA_DIR)/scripts
 TESTS_DIR=$(INFRA_DIR)/tests
 
-all: init validate validate-services deploy mesh test
+all: init validate validate-services up test
 
 init:
-	@echo "=== Initializing Environment ==="
-	@if [ ! -f $(INFRA_DIR)/.env ]; then \
-		cp $(INFRA_DIR)/.env.example $(INFRA_DIR)/.env; \
-		echo "✅ Copied .env.example to .env"; \
-	else \
-		echo "✅ .env file already exists"; \
-	fi
+	@echo "=== Initializing Platform Environment ==="
+	@bash $(SCRIPTS_DIR)/bootstrap.sh
 
 network:
 	@echo "=== Creating Network Foundation ==="
 	@bash $(SCRIPTS_DIR)/setup-networks.sh
 
-deploy: network
-	@echo "=== Deploying Ingress Stack ==="
-	@cd $(INFRA_DIR) && docker compose --env-file .env -f compose/10-traefik.yml up -d --build
-	@echo "Waiting for stack to spin up..."
-	@sleep 3
+doctor:
+	@echo "=== Environment Check ==="
+	@bash $(SCRIPTS_DIR)/doctor.sh
+
+up: doctor init
+	@echo "=== Deploying Platform Stacks ==="
+	@cd $(INFRA_DIR) && docker compose \
+		-f compose/00-core.yml \
+		-f compose/10-platform.yml \
+		-f compose/20-mesh.yml \
+		-f compose/30-storage.yml \
+		-f compose/40-monitoring.yml \
+		-f compose/50-observability.yml \
+		-f compose/60-development.yml \
+		-f compose/70-tools.yml up -d --build
+	@echo "Waiting for services healthchecks..."
+	@sleep 10
+
+deploy: up
 
 validate:
 	@echo "=== Running Ingress Configuration Validation ==="
@@ -45,7 +55,7 @@ discovery:
 	@echo "=== Running DNS Discovery Tests ==="
 	@bash $(TESTS_DIR)/discovery/dns.sh
 
-health:
+discovery-health:
 	@echo "=== Running Health Monitoring Tests ==="
 	@bash $(TESTS_DIR)/discovery/health.sh
 
@@ -101,31 +111,126 @@ test:
 	@$(MAKE) governance-test
 	@$(MAKE) mesh-test
 
-benchmark:
+performance-benchmark:
 	@echo "=== Running Performance Baselines ==="
 	@bash $(TESTS_DIR)/performance/baseline.sh
 
 restart:
-	@echo "=== Restarting Stack ==="
-	@cd $(INFRA_DIR) && docker compose --env-file .env -f compose/10-traefik.yml restart
-	@cd $(INFRA_DIR) && docker compose --env-file .env -f compose/20-mesh.yml restart
+	@echo "=== Restarting Stacks ==="
+	@cd $(INFRA_DIR) && docker compose \
+		-f compose/00-core.yml \
+		-f compose/10-platform.yml \
+		-f compose/20-mesh.yml \
+		-f compose/30-storage.yml \
+		-f compose/40-monitoring.yml \
+		-f compose/50-observability.yml \
+		-f compose/60-development.yml \
+		-f compose/70-tools.yml restart
 
 logs:
-	@echo "=== Showing Live Service Mesh Logs ==="
-	@cd $(INFRA_DIR) && docker compose --env-file .env -f compose/20-mesh.yml logs -f --tail 100
+	@echo "=== Showing Aggregated Logs ==="
+	@bash $(SCRIPTS_DIR)/logs.sh --tail 100
 
 status:
-	@echo "=== Stack Status ==="
-	@cd $(INFRA_DIR) && docker compose --env-file .env -f compose/10-traefik.yml ps
-	@cd $(INFRA_DIR) && docker compose --env-file .env -f compose/20-mesh.yml ps
+	@echo "=== Platform Services Status ==="
+	@bash $(SCRIPTS_DIR)/status.sh
 
-destroy:
-	@echo "=== Destroying Ingress and Service Mesh Stacks ==="
-	@cd $(INFRA_DIR) && docker compose --env-file .env -f compose/20-mesh.yml down 2>/dev/null || true
-	@cd $(INFRA_DIR) && docker compose --env-file .env -f compose/10-traefik.yml down 2>/dev/null || true
-	@echo "Removing platform networks..."
-	@docker network rm sj-edge sj-proxy sj-services sj-data sj-monitoring sj-backup 2>/dev/null || true
-	@echo "Clean up complete."
+down:
+	@echo "=== Stopping Platform Services ==="
+	@cd $(INFRA_DIR) && docker compose \
+		-f compose/00-core.yml \
+		-f compose/10-platform.yml \
+		-f compose/20-mesh.yml \
+		-f compose/30-storage.yml \
+		-f compose/40-monitoring.yml \
+		-f compose/50-observability.yml \
+		-f compose/60-development.yml \
+		-f compose/70-tools.yml down
+
+destroy: down
+	@echo "=== Performing Full System Cleanup ==="
+	@bash $(SCRIPTS_DIR)/cleanup.sh
+
+clean: destroy
+
+reset:
+	@echo "=== Full System Reset ==="
+	@bash $(SCRIPTS_DIR)/reset.sh
+
+diagnostics:
+	@echo "=== Cluster Diagnostics ==="
+	@bash $(SCRIPTS_DIR)/diagnostics.sh
+
+infrastructure-test:
+	@echo "=== Running E2E Infrastructure Test Suite ==="
+	@bash $(TESTS_DIR)/infrastructure-test.sh
+
+# Platform Infrastructure Management & Governance
+.PHONY: bootstrap verify-backup benchmark health inventory drift audit \
+        infra-inventory infra-drift infra-policies infra-quota infra-image-gov infra-backup infra-dr
+
+bootstrap:
+	@echo "=== Bootstrapping Local Cloud Infrastructure ==="
+	@bash $(SCRIPTS_DIR)/bootstrap.sh
+
+verify-backup:
+	@echo "=== Verifying Backup & Recovery Integrity ==="
+	@bash $(SCRIPTS_DIR)/verify-backup.sh
+
+benchmark:
+	@echo "=== Benchmarking Infrastructure Performance ==="
+	@bash $(SCRIPTS_DIR)/benchmark.sh
+
+health:
+	@echo "=== Querying Platform Health Engine Score ==="
+	@curl -s http://localhost:3000/admin/infrastructure/health || echo "❌ Error: Could not connect to Tenant Manager Administration API."
+
+inventory:
+	@echo "=== Discovered Resource Inventory ==="
+	@curl -s http://localhost:3000/admin/infrastructure/inventory || echo "❌ Error: Could not connect to Tenant Manager Administration API."
+
+drift:
+	@echo "=== Running Infrastructure Drift Detection ==="
+	@curl -s http://localhost:3000/admin/infrastructure/drift || echo "❌ Error: Could not connect to Tenant Manager Administration API."
+
+audit:
+	@echo "=== Aggregated System Operations Audit Log ==="
+	@curl -s http://localhost:3000/admin/infrastructure/audit || echo "❌ Error: Could not connect to Tenant Manager Administration API."
+
+infra-inventory:
+	@echo "=== Discovering Infrastructure Inventory ==="
+	@bash $(SCRIPTS_DIR)/inventory.sh
+
+infra-drift:
+	@echo "=== Detecting Infrastructure Drift ==="
+	@bash $(SCRIPTS_DIR)/drift-detect.sh
+
+infra-policies:
+	@echo "=== Querying Infrastructure Policies ==="
+	@bash $(SCRIPTS_DIR)/policy-check.sh
+
+infra-quota:
+	@if [ -z "$(TENANT)" ]; then echo "❌ Error: TENANT is required. Usage: make infra-quota TENANT=<tenant-id> [LIMITS=<json-limits>]"; exit 1; fi
+	@echo "=== Querying/Mutating Quotas for $(TENANT) ==="
+	@if [ -n "$(LIMITS)" ]; then \
+		bash $(SCRIPTS_DIR)/quota.sh "$(TENANT)" '$(LIMITS)'; \
+	else \
+		bash $(SCRIPTS_DIR)/quota.sh "$(TENANT)"; \
+	fi
+
+infra-image-gov:
+	@if [ -z "$(IMAGE)" ]; then echo "❌ Error: IMAGE is required. Usage: make infra-image-gov IMAGE=<image-name>"; exit 1; fi
+	@echo "=== Validating Image Governance for $(IMAGE) ==="
+	@bash $(SCRIPTS_DIR)/image-gov.sh "$(IMAGE)"
+
+infra-backup:
+	@if [ -z "$(TENANT)" ]; then echo "❌ Error: TENANT is required. Usage: make infra-backup TENANT=<tenant-id>"; exit 1; fi
+	@echo "=== Taking Backup for Tenant $(TENANT) ==="
+	@bash $(SCRIPTS_DIR)/backup.sh "$(TENANT)"
+
+infra-dr:
+	@echo "=== Generating Disaster Recovery Platform Snapshot ==="
+	@bash $(SCRIPTS_DIR)/dr.sh
 
 # Tenant Lifecycle Management
 tenant: tenant-validate tenant-test
@@ -197,6 +302,8 @@ app-validate:
 	@bash $(SCRIPTS_DIR)/validate-applications.sh
 	@bash $(SCRIPTS_DIR)/validate-images.sh
 	@bash $(SCRIPTS_DIR)/validate-autoscaling.sh
+	@bash $(SCRIPTS_DIR)/validate-cicd.sh
+	@$(MAKE) operations-validate
 	@echo "✅ All application schema validations passed."
 
 app-test: app-validate
@@ -205,7 +312,10 @@ app-test: app-validate
 	@bash $(TESTS_DIR)/applications/test-releases.sh
 	@bash $(TESTS_DIR)/applications/test-deployments.sh
 	@bash $(TESTS_DIR)/applications/test-rollback.sh
+	@bash $(TESTS_DIR)/applications/test-cicd.sh
+	@$(MAKE) operations-test
 	@echo "✅ All application lifecycle integration tests passed."
+
 
 app-create:
 	@if [ -z "$(ID)" ] || [ -z "$(TENANT)" ]; then echo "❌ Error: ID and TENANT are required. Usage: make app-create ID=<app-id> TENANT=<tenant-id>"; exit 1; fi
@@ -215,12 +325,12 @@ app-create:
 app-build:
 	@if [ -z "$(ID)" ]; then echo "❌ Error: ID is required. Usage: make app-build ID=<app-id>"; exit 1; fi
 	@echo "=== Building Application $(ID) ==="
-	@curl -s -X POST http://localhost:8083/applications/$(ID)/build || echo "❌ Failed to send build request."
+	@curl -s -X POST -H "x-pipeline-execution: true" http://localhost:8083/applications/$(ID)/build || echo "❌ Failed to send build request."
 
 app-deploy:
 	@if [ -z "$(ID)" ] || [ -z "$(RELEASE)" ]; then echo "❌ Error: ID and RELEASE are required. Usage: make app-deploy ID=<app-id> RELEASE=<release-id>"; exit 1; fi
 	@echo "=== Deploying Application $(ID) Release $(RELEASE) ==="
-	@curl -s -X POST -H "Content-Type: application/json" -d '{"releaseId": "$(RELEASE)"}' http://localhost:8083/applications/$(ID)/deploy || echo "❌ Failed to send deploy request."
+	@curl -s -X POST -H "Content-Type: application/json" -H "x-pipeline-execution: true" -d '{"releaseId": "$(RELEASE)"}' http://localhost:8083/applications/$(ID)/deploy || echo "❌ Failed to send deploy request."
 
 app-rollback:
 	@if [ -z "$(ID)" ] || [ -z "$(RELEASE)" ]; then echo "❌ Error: ID and RELEASE are required. Usage: make app-rollback ID=<app-id> RELEASE=<release-id>"; exit 1; fi
@@ -239,6 +349,64 @@ app-metrics:
 	@if [ -z "$(ID)" ]; then echo "❌ Error: ID is required. Usage: make app-metrics ID=<app-id>"; exit 1; fi
 	@echo "=== Metrics for Application $(ID) ==="
 	@curl -s http://localhost:8083/applications/$(ID)/metrics
+
+# CI/CD & Developer Platform targets
+.PHONY: repo-register repo-sync pipeline-trigger pipeline-status pipeline-logs secret-set promote promote-approve
+
+repo-register:
+	@if [ -z "$(ID)" ] || [ -z "$(TENANT)" ] || [ -z "$(URL)" ]; then echo "❌ Error: ID, TENANT, and URL are required. Usage: make repo-register ID=<repo-id> TENANT=<tenant-id> URL=<git-url>"; exit 1; fi
+	@echo "=== Registering Repository $(ID) for Tenant $(TENANT) ==="
+	@curl -s -X POST -H "Content-Type: application/json" -d '{"repository_id": "$(ID)", "url": "$(URL)", "provider": "local"}' http://localhost:8083/tenants/$(TENANT)/repositories
+
+repo-sync:
+	@if [ -z "$(ID)" ] || [ -z "$(TENANT)" ]; then echo "❌ Error: ID and TENANT are required. Usage: make repo-sync ID=<repo-id> TENANT=<tenant-id>"; exit 1; fi
+	@echo "=== Syncing Repository $(ID) ==="
+	@curl -s -X POST http://localhost:8083/tenants/$(TENANT)/repositories/$(ID)/sync
+
+pipeline-trigger:
+	@if [ -z "$(ID)" ] || [ -z "$(TENANT)" ]; then echo "❌ Error: ID (app-id) and TENANT are required. Usage: make pipeline-trigger ID=<app-id> TENANT=<tenant-id> [BRANCH=main]"; exit 1; fi
+	@echo "=== Triggering Pipeline for App $(ID) ==="
+	@curl -s -X POST -H "Content-Type: application/json" -d '{"application_id": "$(ID)", "branch": "$(BRANCH)"}' http://localhost:8083/tenants/$(TENANT)/pipelines/trigger
+
+pipeline-status:
+	@if [ -z "$(RUN)" ] || [ -z "$(TENANT)" ]; then echo "❌ Error: RUN and TENANT are required. Usage: make pipeline-status RUN=<run-id> TENANT=<tenant-id>"; exit 1; fi
+	@curl -s http://localhost:8083/tenants/$(TENANT)/pipelines/runs/$(RUN)
+
+pipeline-logs:
+	@if [ -z "$(RUN)" ] || [ -z "$(TENANT)" ]; then echo "❌ Error: RUN and TENANT are required. Usage: make pipeline-logs RUN=<run-id> TENANT=<tenant-id>"; exit 1; fi
+	@curl -s http://localhost:8083/tenants/$(TENANT)/pipelines/runs/$(RUN)/logs
+
+secret-set:
+	@if [ -z "$(NAME)" ] || [ -z "$(VALUE)" ] || [ -z "$(TENANT)" ]; then echo "❌ Error: NAME, VALUE, and TENANT are required. Usage: make secret-set NAME=<name> VALUE=<value> TENANT=<tenant-id>"; exit 1; fi
+	@curl -s -X POST -H "Content-Type: application/json" -d '{"name": "$(NAME)", "value": "$(VALUE)"}' http://localhost:8083/tenants/$(TENANT)/secrets
+
+promote:
+	@if [ -z "$(ID)" ] || [ -z "$(RELEASE)" ] || [ -z "$(SRC)" ] || [ -z "$(TARGET)" ] || [ -z "$(TENANT)" ]; then echo "❌ Error: ID, RELEASE, SRC, TARGET, and TENANT are required. Usage: make promote ID=<app-id> RELEASE=<release-id> SRC=<src-env> TARGET=<target-env> TENANT=<tenant-id>"; exit 1; fi
+	@curl -s -X POST -H "Content-Type: application/json" -d '{"application_id": "$(ID)", "release_id": "$(RELEASE)", "source_env": "$(SRC)", "target_env": "$(TARGET)"}' http://localhost:8083/tenants/$(TENANT)/promotions
+
+promote-approve:
+	@if [ -z "$(ID)" ] || [ -z "$(TENANT)" ]; then echo "❌ Error: ID (promo-id) and TENANT are required. Usage: make promote-approve ID=<promo-id> TENANT=<tenant-id>"; exit 1; fi
+	@curl -s -X POST -H "Content-Type: application/json" -d '{"approver": "admin"}' http://localhost:8083/tenants/$(TENANT)/promotions/$(ID)/approve
+
+# Platform Operations & Observability targets
+.PHONY: operations-test operations-validate
+
+operations-test: operations-validate
+	@echo "=== Running E2E Operations & SRE Integration Tests ==="
+	@bash $(TESTS_DIR)/applications/test-operations.sh
+
+operations-validate:
+	@echo "=== Running Operations & Observability Validation ==="
+	@bash $(SCRIPTS_DIR)/validate-operations.sh
+
+# Platform Configuration Layer targets
+.PHONY: config-test
+
+config-test:
+	@echo "=== Running Platform Configuration Validation Tests ==="
+	@bash $(SCRIPTS_DIR)/validate-config-platform.sh
+
+
 
 
 

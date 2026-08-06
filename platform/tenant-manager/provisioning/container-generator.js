@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
 const { LifecycleError } = require('../../shared/errors');
+const { NetworkConfig } = require('../../shared/config/config-context');
 
 class ContainerGenerator {
   constructor(tenantsDir) {
@@ -60,7 +61,7 @@ server.listen(port, () => {
             JWT_SECRET: env.JWT_SECRET || ''
           },
           networks: [
-            'sj-proxy',
+            NetworkConfig.PROXY_NETWORK,
             `sj-tenant-${tenantId}`
           ],
           labels: {
@@ -68,12 +69,12 @@ server.listen(port, () => {
             layer: 'tenant-runtime',
             tenant: tenantId,
             'traefik.enable': 'true',
-            'traefik.docker.network': 'sj-proxy'
+            'traefik.docker.network': NetworkConfig.PROXY_NETWORK
           }
         }
       },
       networks: {
-        'sj-proxy': {
+        [NetworkConfig.PROXY_NETWORK]: {
           external: true
         },
         [`sj-tenant-${tenantId}`]: {

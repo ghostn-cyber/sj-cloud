@@ -1,0 +1,59 @@
+type: object
+required:
+  - pipeline_id
+  - tenant_id
+  - application_id
+  - trigger
+  - stages
+properties:
+  pipeline_id:
+    type: string
+    pattern: "^[a-z0-9-]+$"
+  tenant_id:
+    type: string
+    pattern: "^[a-z0-9-]+$"
+  application_id:
+    type: string
+    pattern: "^[a-z0-9-]+$"
+  trigger:
+    type: object
+    required:
+      - type
+    properties:
+      type:
+        type: string
+        enum: [push, tag, release, merge, pull_request, manual, schedule]
+      branch:
+        type: string
+  stages:
+    type: array
+    items:
+      type: object
+      required:
+        - name
+        - steps
+      properties:
+        name:
+          type: string
+        parallel:
+          type: boolean
+        steps:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+              - run
+            properties:
+              name:
+                type: string
+              run:
+                type: string
+              env:
+                type: object
+                additionalProperties:
+                  type: string
+              timeout:
+                type: integer
+              retry:
+                type: integer
